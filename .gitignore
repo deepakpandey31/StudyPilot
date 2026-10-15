@@ -27,3 +27,4 @@ desktop.ini
 dist/
 build/
 *.zip
+!website/downloads/*.zip

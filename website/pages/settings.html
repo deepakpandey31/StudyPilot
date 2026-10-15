@@ -113,22 +113,34 @@
 
       <!-- CHROME EXTENSION CONFIGURATION -->
       <div class="card" style="margin-bottom:var(--sp-5);">
-        <div class="card-title">Chrome Extension Sync</div>
-        <p class="text-muted text-sm" style="margin-bottom:var(--sp-4);">
-          Connect your StudyPilot Chrome Extension to sync your YouTube study history automatically.
-          <br><br>
-          1. Open <code>chrome://extensions</code> in Chrome.<br>
-          2. Enable "Developer mode" and click "Load unpacked" &rarr; select the <code>StudyPilot/extension</code> folder.<br>
-          3. Copy the 32-letter Extension ID and paste it below:
-        </p>
-        <div class="form-group">
-          <label for="extension-id-input">Extension ID</label>
-          <input type="text" id="extension-id-input" placeholder="e.g. bcdklmnoabcdefghijklmnopqrstuv" autocomplete="off" />
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:var(--sp-4);">
+          <div>
+            <div class="card-title" style="margin-bottom:2px;">🧩 Chrome Extension Sync</div>
+            <p class="text-muted text-xs">Track YouTube study lectures and auto-sync watchtime to your dashboard.</p>
+          </div>
+          <a href="../downloads/StudyPilot-Extension.zip" class="btn btn-primary btn-sm" download style="display:flex; align-items:center; gap:6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download Extension (ZIP)
+          </a>
         </div>
-        <div style="display:flex; gap:var(--sp-3); flex-wrap:wrap;">
-          <button class="btn btn-primary" onclick="saveExtensionIdDirect()">Save Extension ID</button>
-          <button class="btn btn-ghost" onclick="testExtensionSyncDirect()">Test Connection ⚡</button>
-          <button class="btn btn-ghost" onclick="clearExtensionIdDirect()">Remove</button>
+
+        <div style="background:var(--color-bg); border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:16px; margin-bottom:var(--sp-4);">
+          <div style="font-weight:600; font-size:var(--font-size-sm); margin-bottom:10px; color:var(--color-text);">
+            🚀 Simple 3-Step Setup for New Users:
+          </div>
+          <ol style="padding-left:18px; font-size:13px; line-height:1.7; color:var(--color-text);">
+            <li>Click <strong>"Download Extension (ZIP)"</strong> above and extract (unzip) it on your device.</li>
+            <li>In Chrome, open <code>chrome://extensions</code> and turn <strong>ON</strong> <em>Developer mode</em> (top-right).</li>
+            <li>Click <strong>"Load unpacked"</strong> (top-left) and select the extracted <strong>extension</strong> folder.</li>
+          </ol>
+          <div style="margin-top:10px; font-size:12px; color:var(--color-success); font-weight:500;">
+            ✓ That's it! StudyPilot AI automatically detects the extension without needing manual IDs.
+          </div>
+        </div>
+
+        <div style="display:flex; gap:var(--sp-3); flex-wrap:wrap; align-items:center;">
+          <button class="btn btn-primary btn-sm" onclick="testExtensionSyncDirect()">Test Connection ⚡</button>
+          <button class="btn btn-ghost btn-sm" onclick="syncNowDirect()">Sync Watch History Now</button>
         </div>
         <p class="text-muted text-sm" style="margin-top:var(--sp-3);" id="ext-status"></p>
         <div id="ext-sync-diag" style="margin-top:8px; font-size:12px; line-height:1.5;"></div>
