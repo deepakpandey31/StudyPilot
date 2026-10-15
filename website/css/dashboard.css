@@ -1,0 +1,515 @@
+/* ============================================================
+   dashboard.css — Sidebar layout, stat cards, charts area,
+                   and all dashboard-specific styles
+   ============================================================ */
+
+/* ─── APP SHELL (sidebar + main) ─────────────────────────── */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ─── SIDEBAR ─────────────────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 200;
+  transition: transform var(--transition);
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-5) var(--sp-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sidebar-header .brand-name {
+  font-size: var(--font-size-base);
+}
+
+/* Navigation links inside sidebar */
+.sidebar-nav {
+  flex: 1;
+  padding: var(--sp-3) 0;
+}
+
+.nav-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  padding: var(--sp-4) var(--sp-4) var(--sp-2);
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 9px var(--sp-4);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  text-decoration: none;
+  border-radius: 0;
+  transition: background var(--transition), color var(--transition);
+  position: relative;
+}
+
+.sidebar-link svg {
+  flex-shrink: 0;
+  width: 17px;
+  height: 17px;
+}
+
+.sidebar-link:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+/* Active page link */
+.sidebar-link.active {
+  background: var(--color-primary-lt);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.sidebar-link.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  background: var(--color-primary);
+  border-radius: 0 3px 3px 0;
+}
+
+/* Sidebar footer (user info + logout) */
+.sidebar-footer {
+  border-top: 1px solid var(--color-border);
+  padding: var(--sp-4);
+}
+
+.user-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.user-name {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  /* truncate long names */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-email {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── MAIN CONTENT AREA ──────────────────────────────────── */
+.main-content {
+  margin-left: var(--sidebar-width);
+  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top header bar inside main */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-5) var(--sp-8);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.page-title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.page-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+/* ─── PAGE BODY ───────────────────────────────────────────── */
+.page-body {
+  padding: var(--sp-6) var(--sp-8);
+  flex: 1;
+}
+
+/* ─── STAT CARDS ROW ─────────────────────────────────────── */
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-6);
+}
+
+.stat-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-5);
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-card-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  font-weight: 500;
+  margin-bottom: var(--sp-2);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.stat-card-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.1;
+}
+
+.stat-card-sub {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-top: var(--sp-1);
+}
+
+/* ─── TWO-COLUMN GRID ────────────────────────────────────── */
+/* Used on dashboard: charts left, activity right */
+.two-col {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--sp-5);
+  margin-bottom: var(--sp-5);
+}
+
+/* ─── CHART CONTAINERS ───────────────────────────────────── */
+.chart-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-6);
+  box-shadow: var(--shadow-sm);
+}
+
+.chart-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sp-5);
+}
+
+.chart-card-title {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.chart-wrapper {
+  position: relative;
+  height: 200px;
+}
+
+/* ─── RECENT VIDEOS LIST ──────────────────────────────────── */
+.video-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.video-item:last-child { border-bottom: none; }
+
+.video-thumb {
+  width: 56px;
+  height: 38px;
+  background: var(--color-border);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+}
+
+.video-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+.video-info { flex: 1; min-width: 0; }
+
+.video-title {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.video-meta {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  display: flex;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+/* ─── DAILY GOAL SECTION ─────────────────────────────────── */
+.goal-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-5);
+  box-shadow: var(--shadow-sm);
+}
+
+.goal-label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  margin-bottom: var(--sp-2);
+}
+
+.goal-value {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--sp-3);
+}
+
+.goal-edit-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+}
+
+.goal-input {
+  width: 70px;
+  padding: 6px 8px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-body);
+  text-align: center;
+  outline: none;
+}
+.goal-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+
+/* ─── MOBILE SIDEBAR TOGGLE ──────────────────────────────── */
+.sidebar-toggle-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--color-text);
+  padding: var(--sp-2);
+}
+
+/* ─── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: var(--shadow-md);
+  }
+  .main-content {
+    margin-left: 0;
+  }
+  .sidebar-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .two-col {
+    grid-template-columns: 1fr;
+  }
+  .page-body {
+    padding: var(--sp-4) var(--sp-4);
+  }
+  .page-header {
+    padding: var(--sp-4) var(--sp-4);
+  }
+}
+
+@media (max-width: 600px) {
+  .stat-cards {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ─── DOMAIN SELECTOR TABS ─────────────────────────────────── */
+.domain-selector-bar {
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  padding: 0 var(--sp-8);
+}
+
+.domain-tabs-wrapper {
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.domain-tabs-wrapper::-webkit-scrollbar { display: none; }
+
+.domain-tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) 0;
+}
+
+.domain-tab-item {
+  display: flex;
+  align-items: center;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 2px 4px 2px 8px;
+  transition: all var(--transition);
+}
+
+.domain-tab-item.active {
+  background: var(--color-primary-lt);
+  border-color: var(--color-primary);
+}
+
+.domain-tab {
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.domain-tab.active {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.domain-custom-badge {
+  font-size: 10px;
+  background: #E0E7FF;
+  color: #3730A3;
+  padding: 1px 6px;
+  border-radius: 100px;
+  font-weight: 600;
+}
+
+.domain-tab-manage-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  padding: 2px 4px;
+  cursor: pointer;
+  border-radius: 4px;
+  line-height: 1;
+}
+.domain-tab-manage-btn:hover {
+  background: rgba(0,0,0,0.06);
+  color: var(--color-text);
+}
+
+.domain-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition);
+}
+.domain-add-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-lt);
+}
+
+/* ─── DOMAIN MODAL ─────────────────────────────────────────── */
+.domain-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.domain-modal-card {
+  max-width: 520px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

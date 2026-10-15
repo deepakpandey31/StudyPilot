@@ -1,0 +1,404 @@
+/* ============================================================
+   style.css  — Global design tokens, resets, layout, utilities
+   Used across ALL pages of StudyPilot AI
+   ============================================================ */
+
+/* ─── Google Font loaded in each HTML head ─────────────────── */
+/* Inter is clean and highly readable — perfect for a study app */
+
+/* ─── 1. CSS CUSTOM PROPERTIES (Design Tokens) ──────────────
+   Change these variables to retheme the entire app instantly.
+   ────────────────────────────────────────────────────────── */
+:root {
+  /* Colour palette */
+  --color-bg:         #F8F7F4;   /* warm off-white page background */
+  --color-surface:    #FFFFFF;   /* card / panel background */
+  --color-border:     #E5E2DC;   /* soft border */
+  --color-text:       #1C1917;   /* near-black body text */
+  --color-text-muted: #6B7280;   /* secondary / hint text */
+  --color-primary:    #2563EB;   /* main blue accent */
+  --color-primary-h:  #1D4ED8;   /* darker blue on hover */
+  --color-primary-lt: #EFF6FF;   /* very light blue tint */
+  --color-danger:     #DC2626;   /* error / destructive */
+  --color-success:    #16A34A;   /* success / completed */
+  --color-warning:    #D97706;   /* warning / in-progress */
+
+  /* Sidebar */
+  --sidebar-width:    220px;
+  --sidebar-bg:       #FFFFFF;
+
+  /* Spacing scale (use these instead of random px values) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+
+  /* Typography */
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-size-sm:   13px;
+  --font-size-base: 15px;
+  --font-size-md:   17px;
+  --font-size-lg:   20px;
+  --font-size-xl:   26px;
+  --font-size-2xl:  34px;
+
+  /* Borders & shadows */
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  16px;
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.10);
+
+  /* Transition */
+  --transition: 160ms ease;
+}
+
+/* ─── 2. RESET ───────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+img, svg { display: block; }
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+a:hover { text-decoration: underline; }
+
+button { cursor: pointer; font-family: inherit; }
+
+/* ─── 3. UTILITY CLASSES ─────────────────────────────────── */
+.hidden        { display: none !important; }
+.text-muted    { color: var(--color-text-muted); }
+.text-sm       { font-size: var(--font-size-sm); }
+.text-center   { text-align: center; }
+.mt-4          { margin-top: var(--sp-4); }
+.mt-6          { margin-top: var(--sp-6); }
+.mb-4          { margin-bottom: var(--sp-4); }
+.flex          { display: flex; }
+.items-center  { align-items: center; }
+.gap-2         { gap: var(--sp-2); }
+.gap-4         { gap: var(--sp-4); }
+.w-full        { width: 100%; }
+
+/* ─── 4. BUTTON SYSTEM ───────────────────────────────────── */
+/* Base button — never style <button> directly on its own */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: 9px var(--sp-5);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: background var(--transition), border-color var(--transition), color var(--transition), box-shadow var(--transition);
+  white-space: nowrap;
+  text-decoration: none;
+  background: none;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+.btn-primary:hover {
+  background: var(--color-primary-h);
+  border-color: var(--color-primary-h);
+  text-decoration: none;
+}
+
+.btn-ghost {
+  color: var(--color-text);
+  border-color: var(--color-border);
+  background: var(--color-surface);
+}
+.btn-ghost:hover {
+  border-color: #C4C0BA;
+  background: #F0EDE8;
+  text-decoration: none;
+}
+
+.btn-danger {
+  background: var(--color-danger);
+  color: #fff;
+  border-color: var(--color-danger);
+}
+.btn-danger:hover { background: #B91C1C; }
+
+.btn-lg {
+  padding: 12px var(--sp-8);
+  font-size: var(--font-size-base);
+}
+
+.btn-sm {
+  padding: 5px var(--sp-3);
+  font-size: var(--font-size-sm);
+}
+
+.btn-full { width: 100%; }
+
+/* Disabled state */
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ─── 5. CARD ─────────────────────────────────────────────── */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-6);
+  box-shadow: var(--shadow-sm);
+}
+
+.card-title {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  margin-bottom: var(--sp-4);
+  color: var(--color-text);
+}
+
+/* ─── 6. FORM ELEMENTS ───────────────────────────────────── */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-4);
+}
+
+.form-group label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  width: 100%;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-error {
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
+  min-height: 20px;
+  margin-bottom: var(--sp-3);
+}
+
+/* ─── 7. BADGE / TAG ─────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.badge-blue    { background: var(--color-primary-lt); color: var(--color-primary); }
+.badge-green   { background: #DCFCE7; color: #15803D; }
+.badge-yellow  { background: #FEF9C3; color: #A16207; }
+.badge-red     { background: #FEE2E2; color: var(--color-danger); }
+.badge-gray    { background: #F3F4F6; color: #6B7280; }
+
+/* ─── 8. PROGRESS BAR ────────────────────────────────────── */
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--color-border);
+  border-radius: 100px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 100px;
+  transition: width 0.4s ease;
+}
+.progress-fill.green  { background: var(--color-success); }
+.progress-fill.yellow { background: var(--color-warning); }
+
+/* ─── 9. TOP NAV (landing page) ──────────────────────────── */
+.top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-4) var(--sp-8);
+  background: rgba(248,247,244,0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.brand-name {
+  font-weight: 700;
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+}
+
+.nav-link {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  text-decoration: none;
+  transition: color var(--transition);
+}
+.nav-link:hover { color: var(--color-text); text-decoration: none; }
+
+/* ─── 10. SECTION TITLE ──────────────────────────────────── */
+.section-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: var(--sp-10);
+  color: var(--color-text);
+}
+
+/* ─── 11. SPINNER ────────────────────────────────────────── */
+.btn-spinner {
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+.btn-spinner.dark {
+  border-color: rgba(0,0,0,0.15);
+  border-top-color: var(--color-text);
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── 12. TOAST NOTIFICATIONS ────────────────────────────── */
+#toast-container {
+  position: fixed;
+  bottom: var(--sp-6);
+  right: var(--sp-6);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.toast {
+  background: var(--color-text);
+  color: #fff;
+  padding: 11px var(--sp-5);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  box-shadow: var(--shadow-md);
+  animation: toastIn 0.25s ease;
+  max-width: 320px;
+}
+.toast.success { background: var(--color-success); }
+.toast.error   { background: var(--color-danger); }
+.toast.warning { background: var(--color-warning); }
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── 13. EMPTY STATE ────────────────────────────────────── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--sp-12) var(--sp-6);
+  color: var(--color-text-muted);
+}
+.empty-state svg { opacity: 0.35; margin-bottom: var(--sp-4); }
+.empty-state p   { font-size: var(--font-size-sm); max-width: 260px; }
+
+/* ─── 14. TABLE ──────────────────────────────────────────── */
+.sp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+.sp-table th {
+  text-align: left;
+  padding: var(--sp-3) var(--sp-4);
+  color: var(--color-text-muted);
+  font-weight: 500;
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+.sp-table td {
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+.sp-table tr:last-child td { border-bottom: none; }
+.sp-table tr:hover td { background: #FAFAF8; }
+
+/* ─── 15. RESPONSIVE HELPERS ─────────────────────────────── */
+@media (max-width: 768px) {
+  :root { --sp-8: 20px; }
+  .section-title { font-size: var(--font-size-lg); }
+}

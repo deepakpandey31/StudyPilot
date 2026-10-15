@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings – StudyPilot AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="../css/dashboard.css" />
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <svg width="24" height="24" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="7" fill="#2563EB"/><path d="M8 14l4 4 8-8" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="brand-name">StudyPilot AI</span>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Study</span>
+      <a href="dashboard.html" class="sidebar-link" id="nav-dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Dashboard</a>
+      <a href="roadmap.html" class="sidebar-link" id="nav-roadmap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>Syllabus Roadmap</a>
+      <a href="tests.html" class="sidebar-link" id="nav-tests"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>Practice Tests</a>
+      <span class="nav-section-label">Manage</span>
+      <a href="bookmarks.html" class="sidebar-link" id="nav-bookmarks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>Bookmarks</a>
+      <a href="todos.html" class="sidebar-link" id="nav-todos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>To-Do List</a>
+      <a href="sgpa.html" class="sidebar-link" id="nav-sgpa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>SGPA Estimator</a>
+      <a href="settings.html" class="sidebar-link active" id="nav-settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-row">
+        <div class="user-avatar" id="sidebar-avatar">S</div>
+        <div><div class="user-name" id="sidebar-name">Student</div><div class="user-email" id="sidebar-email"></div></div>
+      </div>
+      <button class="btn btn-ghost btn-sm w-full" onclick="handleLogout()">Sign out</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="page-header">
+      <button class="sidebar-toggle-btn" onclick="toggleSidebar()" aria-label="Toggle menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div>
+        <h1 class="page-title">Settings</h1>
+        <p class="page-subtitle">Manage your profile and preferences</p>
+      </div>
+    </header>
+
+    <div class="page-body" style="max-width:640px;">
+
+      <!-- PROFILE SETTINGS -->
+      <div class="card" style="margin-bottom:var(--sp-5);">
+        <div class="card-title">Profile</div>
+        <form id="profile-form" onsubmit="saveProfile(event)">
+          <div class="form-group">
+            <label for="set-name">Display name</label>
+            <input type="text" id="set-name" placeholder="Your name" required />
+          </div>
+          <div class="form-group">
+            <label for="set-branch">Branch</label>
+            <select id="set-branch">
+              <option value="CSE">Computer Science and Engineering (CSE)</option>
+              <option value="IT">Information Technology (IT)</option>
+              <option value="ECE">Electronics and Communication (ECE)</option>
+              <option value="ME">Mechanical Engineering (ME)</option>
+              <option value="CE">Civil Engineering (CE)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="set-semester">Current Semester</label>
+            <select id="set-semester">
+              <option value="1">Semester 1</option>
+              <option value="2">Semester 2</option>
+              <option value="3">Semester 3</option>
+              <option value="4">Semester 4</option>
+              <option value="5">Semester 5</option>
+              <option value="6">Semester 6</option>
+              <option value="7">Semester 7</option>
+              <option value="8">Semester 8</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="set-goal">Daily study goal (minutes)</label>
+            <input type="number" id="set-goal" min="10" max="720" placeholder="60" />
+          </div>
+          <button type="submit" class="btn btn-primary" id="profile-save-btn">
+            <span class="btn-text">Save profile</span>
+            <span class="btn-spinner hidden"></span>
+          </button>
+        </form>
+      </div>
+
+      <!-- AI API KEY (Phase 5) -->
+      <div class="card" style="margin-bottom:var(--sp-5);">
+        <div class="card-title">Gemini AI — Practice Test Key</div>
+        <p class="text-muted text-sm" style="margin-bottom:var(--sp-4);">
+          To use AI-powered practice test generation, enter your Gemini API key below.
+          Your key is stored only in your browser's localStorage and is never sent to StudyPilot's servers.
+          <br><br>
+          Get a free key at: <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">aistudio.google.com/app/apikey</a>
+        </p>
+        <div class="form-group">
+          <label for="gemini-key-input">Gemini API Key</label>
+          <input type="password" id="gemini-key-input" placeholder="AIza…" autocomplete="off" />
+        </div>
+        <div style="display:flex; gap:var(--sp-3);">
+          <button class="btn btn-primary" onclick="saveGeminiKeyDirect()">Save key</button>
+          <button class="btn btn-ghost" onclick="clearGeminiKey()">Remove key</button>
+        </div>
+        <p class="text-muted text-sm" style="margin-top:var(--sp-3);" id="key-status"></p>
+      </div>
+
+      <!-- CHROME EXTENSION CONFIGURATION -->
+      <div class="card" style="margin-bottom:var(--sp-5);">
+        <div class="card-title">Chrome Extension Sync</div>
+        <p class="text-muted text-sm" style="margin-bottom:var(--sp-4);">
+          Connect your StudyPilot Chrome Extension to sync your YouTube study history automatically.
+          <br><br>
+          1. Open <code>chrome://extensions</code> in Chrome.<br>
+          2. Enable "Developer mode" and click "Load unpacked" &rarr; select the <code>StudyPilot/extension</code> folder.<br>
+          3. Copy the 32-letter Extension ID and paste it below:
+        </p>
+        <div class="form-group">
+          <label for="extension-id-input">Extension ID</label>
+          <input type="text" id="extension-id-input" placeholder="e.g. bcdklmnoabcdefghijklmnopqrstuv" autocomplete="off" />
+        </div>
+        <div style="display:flex; gap:var(--sp-3); flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="saveExtensionIdDirect()">Save Extension ID</button>
+          <button class="btn btn-ghost" onclick="testExtensionSyncDirect()">Test Connection ⚡</button>
+          <button class="btn btn-ghost" onclick="clearExtensionIdDirect()">Remove</button>
+        </div>
+        <p class="text-muted text-sm" style="margin-top:var(--sp-3);" id="ext-status"></p>
+        <div id="ext-sync-diag" style="margin-top:8px; font-size:12px; line-height:1.5;"></div>
+      </div>
+
+      <!-- DANGER ZONE -->
+      <div class="card" style="border-color:#FCA5A5;">
+        <div class="card-title" style="color:var(--color-danger);">Account</div>
+        <button class="btn btn-ghost" onclick="handleLogout()">Sign out of this device</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="../js/ui-helpers.js"></script>
+<script>
+  // Direct fallback functions to prevent browser caching issues
+  window.saveGeminiKeyDirect = function() {
+    var input = document.getElementById('gemini-key-input');
+    var val = input ? input.value.trim().replace(/^["']|["']$/g, '') : '';
+    if (!val) {
+      if (typeof showToast === 'function') showToast('Please enter an API key.', 'error');
+      else alert('Please enter an API key.');
+      return;
+    }
+    localStorage.setItem('gemini_api_key', val);
+    var statEl = document.getElementById('key-status');
+    if (statEl) statEl.textContent = '✓ API key saved in this browser.';
+    if (typeof showToast === 'function') showToast('Gemini API key saved successfully!', 'success');
+  };
+
+  window.saveExtensionIdDirect = function() {
+    var input = document.getElementById('extension-id-input');
+    var val = input ? input.value.trim().replace(/^["']|["']$/g, '') : '';
+    if (!val) {
+      if (typeof showToast === 'function') showToast('Please enter an Extension ID.', 'error');
+      else alert('Please enter an Extension ID.');
+      return;
+    }
+    localStorage.setItem('studypilot_extension_id', val);
+    var statEl = document.getElementById('ext-status');
+    if (statEl) statEl.textContent = '✓ Extension ID saved (' + val.slice(0, 8) + '…). Automatic sync active.';
+    if (typeof showToast === 'function') showToast('Extension ID saved!', 'success');
+    window.testExtensionSyncDirect();
+  };
+
+  window.clearExtensionIdDirect = function() {
+    localStorage.removeItem('studypilot_extension_id');
+    var input = document.getElementById('extension-id-input');
+    if (input) input.value = '';
+    var statEl = document.getElementById('ext-status');
+    if (statEl) statEl.textContent = 'Extension ID removed.';
+    var diagEl = document.getElementById('ext-sync-diag');
+    if (diagEl) diagEl.textContent = '';
+    if (typeof showToast === 'function') showToast('Extension ID removed.', 'success');
+  };
+
+  window.testExtensionSyncDirect = function() {
+    var input = document.getElementById('extension-id-input');
+    var rawInput = input ? input.value.trim().replace(/^["']|["']$/g, '') : '';
+    if (rawInput) {
+      localStorage.setItem('studypilot_extension_id', rawInput);
+    }
+    var extId = localStorage.getItem('studypilot_extension_id') || rawInput;
+    var diagEl = document.getElementById('ext-sync-diag');
+    if (diagEl) diagEl.innerHTML = '<span style="color:var(--color-primary);">⏳ Testing connection to extension…</span>';
+
+    // 1. Try bridge content script first (works seamlessly on localhost)
+    var bridgeDone = false;
+    var bridgeTimer = setTimeout(function() {
+      if (!bridgeDone) {
+        bridgeDone = true;
+        tryDirectRuntimeTest();
+      }
+    }, 1500);
+
+    function onBridgeTest(event) {
+      if (event.source !== window || !event.data) return;
+      if (event.data.type === 'STUDYPILOT_SYNC_RESPONSE') {
+        bridgeDone = true;
+        clearTimeout(bridgeTimer);
+        window.removeEventListener('message', onBridgeTest);
+
+        if (event.data.error) {
+          tryDirectRuntimeTest(event.data.error);
+          return;
+        }
+
+        var payload = event.data.payload || {};
+        var count = payload.videos ? Object.keys(payload.videos).length : 0;
+        var bmCount = payload.bookmarks ? Object.keys(payload.bookmarks).length : 0;
+
+        if (payload.extensionId) {
+          localStorage.setItem('studypilot_extension_id', payload.extensionId);
+          if (input && !input.value) input.value = payload.extensionId;
+        }
+
+        if (diagEl) {
+          diagEl.innerHTML = '<div style="background:#DCFCE7; border:1px solid #86EFAC; color:#166534; padding:12px; border-radius:6px; margin-top:8px;">' +
+            '<strong>✅ Extension Connected Successfully! (Active Bridge)</strong><br>' +
+            (payload.extensionId ? 'Extension ID: <code>' + payload.extensionId + '</code><br>' : '') +
+            'Locally tracked videos: <strong>' + count + '</strong> | Bookmarks: <strong>' + bmCount + '</strong>.<br>' +
+            (count === 0
+              ? '<span style="color:#854D0E;">⚡ <em>Tip: 0 videos tracked so far. Play any YouTube video for 10-15s, or click "⚡ Add Sample Lecture" on your Dashboard!</em></span>'
+              : '⚡ Data is syncing smoothly to your Dashboard!') +
+            '</div>';
+        }
+      }
+    }
+
+    window.addEventListener('message', onBridgeTest);
+    window.postMessage({ type: 'STUDYPILOT_REQUEST_SYNC' }, '*');
+
+    function tryDirectRuntimeTest(bridgeError) {
+      if (typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.sendMessage) {
+        if (diagEl) {
+          diagEl.innerHTML = '<div style="background:#FEE2E2; border:1px solid #FCA5A5; color:#991B1B; padding:12px; border-radius:6px; margin-top:8px;">' +
+            '<strong>❌ Chrome Extension Not Responding</strong><br>' +
+            '<strong>Follow these 3 quick steps:</strong><br>' +
+            '1. Open <code>chrome://extensions</code> in a new tab.<br>' +
+            '2. Find <strong>StudyPilot AI</strong> and click the <strong>↻ (Reload) icon</strong>.<br>' +
+            '3. Refresh this page and click <strong>Test Connection ⚡</strong> again.</div>';
+        }
+        return;
+      }
+
+      if (!extId) {
+        if (diagEl) {
+          diagEl.innerHTML = '<div style="background:#FEF9C3; border:1px solid #FDE68A; color:#854D0E; padding:12px; border-radius:6px; margin-top:8px;">' +
+            'Please paste your 32-letter Extension ID from <code>chrome://extensions</code> into the input above and click <strong>Save Extension ID</strong>.</div>';
+        }
+        return;
+      }
+
+      try {
+        chrome.runtime.sendMessage(extId, { type: 'GET_ALL_VIDEOS' }, function(response) {
+          if (chrome.runtime.lastError) {
+            if (diagEl) {
+              diagEl.innerHTML = '<div style="background:#FEE2E2; border:1px solid #FCA5A5; color:#991B1B; padding:12px; border-radius:6px; margin-top:8px;">' +
+                '<strong>❌ Connection Error:</strong> ' + chrome.runtime.lastError.message + '<br><br>' +
+                '<strong>Quick Fix:</strong><br>' +
+                '1. Go to <code>chrome://extensions</code>.<br>' +
+                '2. Click the <strong>↻ (Reload) icon</strong> on StudyPilot AI.<br>' +
+                '3. Refresh this page and click Test Connection again.</div>';
+            }
+          } else if (response && response.videos !== undefined) {
+            var count = Object.keys(response.videos).length;
+            var bmCount = response.bookmarks ? Object.keys(response.bookmarks).length : 0;
+            if (diagEl) {
+              diagEl.innerHTML = '<div style="background:#DCFCE7; border:1px solid #86EFAC; color:#166534; padding:12px; border-radius:6px; margin-top:8px;">' +
+                '<strong>✅ Extension Connected Successfully via Runtime API!</strong><br>' +
+                'Locally tracked videos: <strong>' + count + '</strong> | Bookmarks: <strong>' + bmCount + '</strong>.<br>' +
+                'Head over to your <a href="dashboard.html" style="color:#166534; font-weight:700; text-decoration:underline;">Dashboard</a> and click "Sync Extension".</div>';
+            }
+          } else {
+            if (diagEl) {
+              diagEl.innerHTML = '<div style="background:#FEF9C3; border:1px solid #FDE68A; color:#854D0E; padding:12px; border-radius:6px; margin-top:8px;">' +
+                'Extension responded, but no study data is recorded yet. Open a YouTube lecture and start watching!</div>';
+            }
+          }
+        });
+      } catch (err) {
+        if (diagEl) diagEl.innerHTML = '<span style="color:#DC2626;">Error: ' + err.message + '</span>';
+      }
+    }
+  };
+</script>
+<script type="module" src="../js/settings.js?v=20261015"></script>
+</body>
+</html>

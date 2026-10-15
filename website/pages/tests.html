@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Practice Tests – StudyPilot AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="../css/dashboard.css" />
+  <style>
+    /* ── AI KEY NOTE ────────────────────────────────────── */
+    .ai-setup-notice {
+      background: var(--color-primary-lt);
+      border: 1px solid #BFDBFE;
+      border-radius: var(--radius-md);
+      padding: var(--sp-5);
+      margin-bottom: var(--sp-5);
+      font-size: var(--font-size-sm);
+    }
+
+    /* ── TEST GENERATOR FORM ────────────────────────────── */
+    .test-gen-form {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: var(--sp-6);
+      margin-bottom: var(--sp-5);
+    }
+
+    /* ── MCQ QUESTION CARD ──────────────────────────────── */
+    .question-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: var(--sp-5);
+      margin-bottom: var(--sp-4);
+    }
+    .question-num {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: var(--sp-2);
+    }
+    .question-text {
+      font-size: var(--font-size-base);
+      font-weight: 500;
+      color: var(--color-text);
+      margin-bottom: var(--sp-4);
+      line-height: 1.6;
+    }
+    .options-list { list-style: none; display: flex; flex-direction: column; gap: var(--sp-2); }
+    .option-btn {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+      padding: 10px var(--sp-4);
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      font-size: var(--font-size-sm);
+      font-family: var(--font-body);
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+      transition: all var(--transition);
+    }
+    .option-btn:hover { background: var(--color-bg); border-color: #C4C0BA; }
+    .option-btn.selected { border-color: var(--color-primary); background: var(--color-primary-lt); color: var(--color-primary); }
+    .option-btn.correct  { border-color: var(--color-success); background: #DCFCE7; color: var(--color-success); }
+    .option-btn.wrong    { border-color: var(--color-danger);  background: #FEE2E2; color: var(--color-danger); }
+
+    .option-letter {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--color-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .explanation-box {
+      display: none;
+      margin-top: var(--sp-3);
+      padding: var(--sp-3) var(--sp-4);
+      background: #F0FDF4;
+      border-left: 3px solid var(--color-success);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-size: var(--font-size-sm);
+      color: #166534;
+    }
+    .explanation-box.visible { display: block; }
+
+    /* ── SCORE CARD ─────────────────────────────────────── */
+    .score-card {
+      display: none;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: var(--sp-8);
+      text-align: center;
+      margin-bottom: var(--sp-5);
+    }
+    .score-card.visible { display: block; }
+    .score-big {
+      font-size: 48px;
+      font-weight: 800;
+      color: var(--color-primary);
+      line-height: 1;
+      margin-bottom: var(--sp-2);
+    }
+
+    /* ── PREVIOUS TESTS ─────────────────────────────────── */
+    .test-history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--sp-3) 0;
+      border-bottom: 1px solid var(--color-border);
+      font-size: var(--font-size-sm);
+      gap: var(--sp-4);
+      flex-wrap: wrap;
+    }
+    .test-history-item:last-child { border-bottom: none; }
+
+    /* Loading overlay for AI generation */
+    .ai-loading {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--sp-4);
+      padding: var(--sp-8);
+      text-align: center;
+    }
+    .ai-loading.visible { display: flex; }
+    .ai-spinner-large {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--color-border);
+      border-top-color: var(--color-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <svg width="24" height="24" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="7" fill="#2563EB"/><path d="M8 14l4 4 8-8" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="brand-name">StudyPilot AI</span>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Study</span>
+      <a href="dashboard.html" class="sidebar-link" id="nav-dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Dashboard</a>
+      <a href="roadmap.html" class="sidebar-link" id="nav-roadmap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>Syllabus Roadmap</a>
+      <a href="tests.html" class="sidebar-link active" id="nav-tests"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Practice Tests</a>
+      <span class="nav-section-label">Manage</span>
+      <a href="bookmarks.html" class="sidebar-link" id="nav-bookmarks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>Bookmarks</a>
+      <a href="todos.html" class="sidebar-link" id="nav-todos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>To-Do List</a>
+      <a href="sgpa.html" class="sidebar-link" id="nav-sgpa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>SGPA Estimator</a>
+      <a href="settings.html" class="sidebar-link" id="nav-settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/></svg>Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-row">
+        <div class="user-avatar" id="sidebar-avatar">S</div>
+        <div><div class="user-name" id="sidebar-name">Student</div><div class="user-email" id="sidebar-email"></div></div>
+      </div>
+      <button class="btn btn-ghost btn-sm w-full" onclick="handleLogout()">Sign out</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <!-- Domain Selector Bar (AKTU, DSA, Web Dev, Custom) -->
+    <div id="domain-selector-container"></div>
+
+    <header class="page-header">
+      <button class="sidebar-toggle-btn" onclick="toggleSidebar()" aria-label="Toggle menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div>
+        <h1 class="page-title" id="tests-page-title">Practice Tests</h1>
+        <p class="page-subtitle" id="tests-page-subtitle">AI-generated MCQs tailored to your curriculum and actual study progress</p>
+      </div>
+    </header>
+
+    <div class="page-body">
+      <!-- AI Setup Notice -->
+      <div class="ai-setup-notice" id="ai-notice">
+        <strong>🔑 Gemini API Integration:</strong> AI questions are generated using your personal Gemini API key.
+        Enter it in <a href="settings.html" style="font-weight:600; text-decoration:underline;">Settings</a>. Your key is stored securely in your browser
+        (localStorage) and is never transmitted to any third-party server.
+        <span class="text-muted text-xs" style="display:block; margin-top:4px;">Without a key, the generator seamlessly runs in offline basic-concept mode.</span>
+      </div>
+
+      <!-- Mode Selector Tabs -->
+      <div style="display:flex; gap:8px; margin-bottom:var(--sp-4);">
+        <button class="btn btn-primary btn-sm" id="btn-mode-a" onclick="switchTestMode('A')">
+          Mode A: Custom Test
+        </button>
+        <button class="btn btn-ghost btn-sm" id="btn-mode-b" onclick="switchTestMode('B')">
+          Mode B: Test Based on My Progress
+        </button>
+      </div>
+
+      <!-- MODE A: Custom Test Form -->
+      <div class="test-gen-form" id="mode-a-card">
+        <div class="card-title" style="margin-bottom:var(--sp-2);">Mode A: Custom Practice Test</div>
+        <p class="text-muted text-xs mb-4">Choose any subject, unit, or specific topics from the active domain to test your comprehension.</p>
+        
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-4); margin-bottom:var(--sp-4);">
+          <div class="form-group" style="margin-bottom:0;">
+            <label for="test-subject">Subject / Module</label>
+            <select id="test-subject" onchange="updateTopicList()">
+              <!-- filled by JS -->
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label for="test-unit">Unit / Chapter (optional)</label>
+            <select id="test-unit" onchange="updateTopicCheckboxes()">
+              <option value="">All units</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group mb-4" id="topic-select-container">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label style="margin:0; font-weight:600; font-size:var(--font-size-sm); color:var(--color-text);">Specific Topics (Optional)</label>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="text-xs text-muted" id="topic-select-count">All topics in scope</span>
+              <button type="button" class="btn btn-ghost btn-xs" style="padding:2px 8px; font-size:11px;" onclick="selectAllTopics(true)">Select All</button>
+              <button type="button" class="btn btn-ghost btn-xs" style="padding:2px 8px; font-size:11px;" onclick="selectAllTopics(false)">Clear</button>
+            </div>
+          </div>
+          <div id="topic-checkboxes-list" style="max-height:160px; overflow-y:auto; border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:8px 12px; background:var(--color-bg); font-size:var(--font-size-sm); display:flex; flex-direction:column; gap:6px;">
+            <span class="text-muted text-xs">Select a subject to view topics</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="test-num-q">Number of questions</label>
+          <select id="test-num-q">
+            <option value="5">5 questions</option>
+            <option value="10" selected>10 questions (Recommended)</option>
+            <option value="15">15 questions</option>
+            <option value="20">20 questions</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="generateTest()" id="gen-test-btn">
+          <span class="btn-text">Generate Custom Test</span>
+          <span class="btn-spinner hidden"></span>
+        </button>
+      </div>
+
+      <!-- MODE B: Progress-Based Test Card -->
+      <div class="test-gen-form" id="mode-b-card" style="display:none;">
+        <div class="card-title" style="margin-bottom:var(--sp-2);">Mode B: Test Based on My Actual Progress</div>
+        <p class="text-muted text-xs mb-4">Automatically generates questions strictly covering the topics you have completed or watched in this domain.</p>
+
+        <div id="mode-b-topics-box" style="background:var(--color-bg); border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:14px; margin-bottom:var(--sp-4);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <strong style="font-size:var(--font-size-sm);" id="mode-b-count-label">Loading your progress…</strong>
+            <span class="badge badge-gray" id="mode-b-domain-badge">Domain</span>
+          </div>
+          <div id="mode-b-topics-pills" style="display:flex; flex-wrap:wrap; gap:6px; max-height:120px; overflow-y:auto;">
+            <!-- Filled by JS -->
+          </div>
+        </div>
+
+        <div class="form-group mb-4">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+            <input type="checkbox" id="mode-b-include-diagnostic" style="width:16px; height:16px; accent-color:var(--color-primary);" />
+            <span style="font-size:var(--font-size-sm); font-weight:500;">Include upcoming topics as diagnostic questions</span>
+          </label>
+          <span class="text-xs text-muted" style="margin-left:24px; display:block;">If checked, adds 1-2 diagnostic questions on upcoming topics to test readiness.</span>
+        </div>
+
+        <div class="form-group">
+          <label for="test-num-q-b">Number of questions</label>
+          <select id="test-num-q-b">
+            <option value="5">5 questions</option>
+            <option value="10" selected>10 questions (Recommended)</option>
+            <option value="15">15 questions</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="generateProgressTest()" id="gen-progress-test-btn">
+          <span class="btn-text">Generate Progress-Based Test</span>
+          <span class="btn-spinner hidden"></span>
+        </button>
+      </div>
+
+      <!-- AI loading state -->
+      <div class="ai-loading" id="ai-loading">
+        <div class="ai-spinner-large"></div>
+        <p class="text-muted text-sm" id="ai-loading-text">Gemini AI is generating your questions…<br/>This may take 10–20 seconds.</p>
+      </div>
+
+      <!-- Score card (shown after submission) -->
+      <div class="score-card" id="score-card">
+        <div class="text-muted text-sm" style="margin-bottom:4px;">Your Score</div>
+        <div class="score-big" id="score-display">—</div>
+        <div id="score-message" style="margin:10px 0; font-weight:500;"></div>
+        <button class="btn btn-primary" onclick="resetTest()" style="margin-top:var(--sp-4);">Try another test</button>
+      </div>
+
+      <!-- Questions area -->
+      <div id="questions-area"></div>
+
+      <!-- Submit button (only shown when test is active) -->
+      <div id="submit-row" style="display:none; margin-top:var(--sp-4);">
+        <button class="btn btn-primary btn-lg" onclick="submitTest()" id="submit-btn">
+          Submit Test
+        </button>
+      </div>
+
+      <!-- Test history -->
+      <div class="card" style="margin-top:var(--sp-5);">
+        <div class="card-title">Previous Tests</div>
+        <div id="test-history-list">
+          <div class="empty-state">
+            <p class="text-muted text-sm">No tests taken yet. Generate your first test above.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="../js/ui-helpers.js"></script>
+<script type="module" src="../js/tests.js?v=20261016_v3"></script>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>To-Do List – StudyPilot AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="../css/dashboard.css" />
+  <style>
+    .todo-add-form {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: var(--sp-5);
+      margin-bottom: var(--sp-5);
+      display: flex;
+      gap: var(--sp-3);
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+    .todo-add-form .form-group { margin-bottom: 0; flex: 1; min-width: 180px; }
+
+    .todo-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--color-border);
+      margin-bottom: var(--sp-5);
+    }
+    .todo-tab {
+      padding: 9px var(--sp-5);
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      color: var(--color-text-muted);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      cursor: pointer;
+      transition: color var(--transition), border-color var(--transition);
+    }
+    .todo-tab.active {
+      color: var(--color-primary);
+      border-bottom-color: var(--color-primary);
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--sp-3);
+      padding: var(--sp-4) 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .todo-item:last-child { border-bottom: none; }
+
+    .todo-check {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--color-primary);
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .todo-body { flex: 1; min-width: 0; }
+    .todo-title { font-size: var(--font-size-sm); font-weight: 500; }
+    .todo-title.done {
+      text-decoration: line-through;
+      color: var(--color-text-muted);
+    }
+    .todo-due { font-size: 11px; color: var(--color-text-muted); margin-top: 2px; }
+    .todo-due.overdue { color: var(--color-danger); }
+
+    .todo-actions { display: flex; gap: var(--sp-2); }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <svg width="24" height="24" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="7" fill="#2563EB"/><path d="M8 14l4 4 8-8" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="brand-name">StudyPilot AI</span>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Study</span>
+      <a href="dashboard.html" class="sidebar-link" id="nav-dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Dashboard</a>
+      <a href="roadmap.html" class="sidebar-link" id="nav-roadmap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>Syllabus Roadmap</a>
+      <a href="tests.html" class="sidebar-link" id="nav-tests"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Practice Tests</a>
+      <span class="nav-section-label">Manage</span>
+      <a href="bookmarks.html" class="sidebar-link" id="nav-bookmarks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>Bookmarks</a>
+      <a href="todos.html" class="sidebar-link active" id="nav-todos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>To-Do List</a>
+      <a href="sgpa.html" class="sidebar-link" id="nav-sgpa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>SGPA Estimator</a>
+      <a href="settings.html" class="sidebar-link" id="nav-settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-row">
+        <div class="user-avatar" id="sidebar-avatar">S</div>
+        <div><div class="user-name" id="sidebar-name">Student</div><div class="user-email" id="sidebar-email"></div></div>
+      </div>
+      <button class="btn btn-ghost btn-sm w-full" onclick="handleLogout()">Sign out</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <!-- Domain Selector Bar (AKTU, DSA, Web Dev, Custom) -->
+    <div id="domain-selector-container"></div>
+
+    <header class="page-header">
+      <button class="sidebar-toggle-btn" onclick="toggleSidebar()" aria-label="Toggle menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div>
+        <h1 class="page-title">To-Do List</h1>
+        <p class="page-subtitle">Track tasks, assignments, and study milestones</p>
+      </div>
+    </header>
+
+    <div class="page-body">
+      <!-- Add task form -->
+      <form class="todo-add-form" onsubmit="addTodo(event)" id="todo-form">
+        <div class="form-group">
+          <label for="todo-title-input">Task</label>
+          <input type="text" id="todo-title-input" placeholder="e.g. Revise Linked Lists chapter" required maxlength="200" />
+        </div>
+        <div class="form-group">
+          <label for="todo-due-input">Due date (optional)</label>
+          <input type="date" id="todo-due-input" />
+        </div>
+        <button type="submit" class="btn btn-primary" id="todo-add-btn">
+          <span class="btn-text">Add task</span>
+          <span class="btn-spinner hidden"></span>
+        </button>
+      </form>
+
+      <!-- Tabs: Pending / Completed -->
+      <div class="todo-tabs">
+        <button class="todo-tab active" id="tab-pending"   onclick="switchTodoTab('pending')">Pending</button>
+        <button class="todo-tab"        id="tab-completed" onclick="switchTodoTab('completed')">Completed</button>
+      </div>
+
+      <!-- Task list -->
+      <div class="card" id="todo-list-container">
+        <div class="empty-state" id="todo-empty">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          <p>No tasks yet. Add your first task above.</p>
+        </div>
+        <div id="todo-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="../js/ui-helpers.js"></script>
+<script type="module" src="../js/todos.js?v=20261015_fast"></script>
+</body>
+</html>

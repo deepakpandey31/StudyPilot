@@ -1,0 +1,156 @@
+// ============================================================
+// firestore.rules — Firestore Security Rules for StudyPilot AI
+//
+// WHAT THESE RULES DO:
+// - Users can only read and write their OWN data.
+// - Nobody can read or write another user's data.
+// - The rules require the user to be authenticated (logged in).
+//
+// HOW TO DEPLOY:
+// Go to Firebase Console → Firestore → Rules → paste these rules → Publish
+//
+// HOW TO TEST:
+// Use the Rules Playground in the Firebase Console to test
+// different read/write scenarios.
+//
+// VIVA TIP: "We wrote Firestore security rules that check
+// request.auth.uid == resource.data.userId. This ensures
+// User A cannot read User B's study data."
+// ============================================================
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── HELPER FUNCTION ────────────────────────────────────
+    // Returns true if the user is signed in
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Returns true if the user owns this document
+    // We check this two ways:
+    // 1. The document has a 'userId' field matching the logged-in user
+    // 2. The document ID starts with the user's UID (e.g. "uid_videoId")
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // ── USERS COLLECTION ───────────────────────────────────
+    // Each user has one document with their profile and settings.
+    // Document ID = user's Firebase Auth UID
+    match /users/{userId} {
+      // Users can read their own profile
+      allow read: if isAuthenticated() && isOwner(userId);
+
+      // Users can create or update their own profile
+      allow write: if isAuthenticated() && isOwner(userId);
+
+      // Nested roadmap progress and domain progress
+      match /roadmap/{document=**} {
+        allow read, write: if isAuthenticated() && isOwner(userId);
+      }
+
+      // User custom domains
+      match /customDomains/{domainId} {
+        allow read, write: if isAuthenticated() && isOwner(userId);
+      }
+
+      // User custom syllabus/roadmaps
+      match /customRoadmaps/{roadmapId} {
+        allow read, write: if isAuthenticated() && isOwner(userId);
+      }
+    }
+
+    // ── VIDEOS COLLECTION ──────────────────────────────────
+    // Tracked YouTube videos. Document ID = "{userId}_{videoId}"
+    // Contains: userId, videoId, title, watchedSeconds, completed, etc.
+    match /videos/{videoDocId} {
+      // User can read their own video records
+      allow read: if isAuthenticated()
+                  && resource.data.userId == request.auth.uid;
+
+      // User can create a video record if the userId field matches their UID
+      allow create: if isAuthenticated()
+                    && request.resource.data.userId == request.auth.uid;
+
+      // User can update/delete their own video records
+      allow update, delete: if isAuthenticated()
+                             && resource.data.userId == request.auth.uid;
+    }
+
+    // ── BOOKMARKS COLLECTION ───────────────────────────────
+    // Bookmarked videos. Document ID = "{userId}_{videoId}"
+    match /bookmarks/{bookmarkId} {
+      allow read: if isAuthenticated()
+                  && resource.data.userId == request.auth.uid;
+
+      allow create: if isAuthenticated()
+                    && request.resource.data.userId == request.auth.uid;
+
+      allow update, delete: if isAuthenticated()
+                             && resource.data.userId == request.auth.uid;
+    }
+
+    // ── DAILY ACTIVITY COLLECTION ──────────────────────────
+    // Per-day study time totals. Document ID = "{userId}_{YYYY-MM-DD}"
+    match /dailyActivity/{activityId} {
+      allow read: if isAuthenticated()
+                  && resource.data.userId == request.auth.uid;
+
+      allow create: if isAuthenticated()
+                    && request.resource.data.userId == request.auth.uid;
+
+      allow update: if isAuthenticated()
+                    && resource.data.userId == request.auth.uid;
+    }
+
+    // ── TODOS COLLECTION ───────────────────────────────────
+    // To-do tasks. Auto-generated document IDs.
+    match /todos/{todoId} {
+      allow read: if isAuthenticated()
+                  && resource.data.userId == request.auth.uid;
+
+      allow create: if isAuthenticated()
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.title is string
+                    && request.resource.data.title.size() > 0
+                    && request.resource.data.title.size() <= 200;
+
+      allow update, delete: if isAuthenticated()
+                             && resource.data.userId == request.auth.uid;
+    }
+
+    // ── TESTS & TEST RESULTS COLLECTION ───────────────────
+    // Practice tests (Mode A & Mode B) and AI test scores.
+    match /tests/{testId} {
+      allow read: if isAuthenticated()
+                  && resource.data.userId == request.auth.uid;
+
+      allow create: if isAuthenticated()
+                    && request.resource.data.userId == request.auth.uid;
+
+      allow update, delete: if isAuthenticated()
+                             && resource.data.userId == request.auth.uid;
+    }
+
+    match /testResults/{resultId} {
+      allow read: if isAuthenticated()
+                  && resource.data.userId == request.auth.uid;
+
+      allow create: if isAuthenticated()
+                    && request.resource.data.userId == request.auth.uid;
+
+      allow update, delete: if false;
+    }
+
+    // ── DENY EVERYTHING ELSE ───────────────────────────────
+    // Any collection not listed above is locked by default.
+    // This is the safest default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+  }
+}
