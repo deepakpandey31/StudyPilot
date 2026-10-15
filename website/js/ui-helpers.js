@@ -336,14 +336,20 @@ window.testModalExtensionConnection = testModalExtensionConnection;
 // Global window attachments
 window.showToast = showToast;
 window.formatDuration = formatDuration;
+window.formatMinutes = formatMinutes;
 window.formatDate = formatDate;
-window.formatTimestamp = formatTimestamp;
-window.setActive = setActive;
-window.setButtonLoading = setButtonLoading;
+window.getTodayKey = getTodayKey;
+window.setActiveSidebarLink = setActiveSidebarLink;
+window.toggleSidebar = toggleSidebar;
+window.calcPercent = calcPercent;
+window.getInitials = getInitials;
+window.clamp = clamp;
 window.debounce = debounce;
 window.closeModal = closeModal;
 window.openExtensionSetupModal = openExtensionSetupModal;
 window.closeExtensionSetupModal = closeExtensionSetupModal;
 window.copyChromeExtensionsUrl = copyChromeExtensionsUrl;
 window.testModalExtensionConnection = testModalExtensionConnection;
+
+
 
