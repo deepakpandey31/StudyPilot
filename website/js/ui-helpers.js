@@ -333,17 +333,17 @@ function testModalExtensionConnection() {
 }
 window.testModalExtensionConnection = testModalExtensionConnection;
 
-// ES Module exports for compatibility when imported
-export {
-  showToast,
-  formatDuration,
-  formatDate,
-  formatTimestamp,
-  setActive,
-  setButtonLoading,
-  debounce,
-  closeModal,
-  openExtensionSetupModal,
-  closeExtensionSetupModal
-};
+// Global window attachments
+window.showToast = showToast;
+window.formatDuration = formatDuration;
+window.formatDate = formatDate;
+window.formatTimestamp = formatTimestamp;
+window.setActive = setActive;
+window.setButtonLoading = setButtonLoading;
+window.debounce = debounce;
+window.closeModal = closeModal;
+window.openExtensionSetupModal = openExtensionSetupModal;
+window.closeExtensionSetupModal = closeExtensionSetupModal;
+window.copyChromeExtensionsUrl = copyChromeExtensionsUrl;
+window.testModalExtensionConnection = testModalExtensionConnection;
 
