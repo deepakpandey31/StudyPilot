@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Project Report - StudyPilot AI</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 25mm 20mm 25mm 20mm;
+        }
+        body {
+            font-family: 'Times New Roman', Times, Georgia, serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            color: #111;
+            background-color: #f1f5f9;
+            margin: 0;
+            padding: 30px 15px;
+        }
+        .report-container {
+            max-width: 860px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 55px 50px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.08);
+            border-radius: 6px;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Times New Roman', Times, Georgia, serif;
+            color: #0f172a;
+            font-weight: bold;
+        }
+        h1 {
+            font-size: 20pt;
+            text-align: center;
+            text-transform: uppercase;
+            margin-top: 1.6em;
+            margin-bottom: 0.6em;
+            letter-spacing: 0.5px;
+        }
+        h2 {
+            font-size: 15pt;
+            border-bottom: 1.5px solid #0f172a;
+            padding-bottom: 4px;
+            margin-top: 2em;
+            margin-bottom: 0.8em;
+        }
+        h3 {
+            font-size: 13pt;
+            margin-top: 1.4em;
+            margin-bottom: 0.5em;
+        }
+        p {
+            margin: 0.7em 0;
+            text-align: justify;
+        }
+        ul, ol {
+            margin: 0.6em 0 0.6em 25px;
+        }
+        li {
+            margin-bottom: 0.35em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.8em 0;
+            font-size: 11pt;
+        }
+        th, td {
+            border: 1px solid #475569;
+            padding: 8px 12px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #f1f5f9;
+            font-weight: bold;
+            color: #0f172a;
+        }
+        tr:nth-child(even) td {
+            background-color: #f8fafc;
+        }
+        pre {
+            background-color: #0f172a;
+            color: #f8fafc;
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 10pt;
+            line-height: 1.45;
+            margin: 1.2em 0;
+        }
+        code {
+            font-family: 'Consolas', 'Courier New', monospace;
+            background-color: #e2e8f0;
+            color: #0f172a;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 10.5pt;
+        }
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            font-size: 9.5pt;
+        }
+        blockquote {
+            border-left: 4px solid #3b82f6;
+            margin: 1.2em 0;
+            padding: 8px 18px;
+            background: #eff6ff;
+            color: #1e3a8a;
+            font-style: italic;
+        }
+        hr {
+            border: 0;
+            border-top: 1px solid #cbd5e1;
+            margin: 2em 0;
+        }
+        .page-break {
+            page-break-after: always;
+            break-after: page;
+            margin-top: 2em;
+            margin-bottom: 2em;
+            border-top: 2px dashed #94a3b8;
+            position: relative;
+        }
+        .page-break::after {
+            content: "[ PAGE BREAK ]";
+            position: absolute;
+            top: -10px;
+            right: 0;
+            background: #ffffff;
+            padding: 0 10px;
+            font-size: 8pt;
+            color: #64748b;
+            font-family: sans-serif;
+        }
+        .no-print {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 14px 20px;
+            background: #e0f2fe;
+            border: 1px solid #7dd3fc;
+            border-radius: 6px;
+            font-family: system-ui, sans-serif;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .print-btn {
+            background: #0284c7;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .print-btn:hover {
+            background: #0369a1;
+        }
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+            }
+            .report-container {
+                box-shadow: none;
+                padding: 0;
+                margin: 0;
+                max-width: 100%;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .page-break {
+                border: none !important;
+                page-break-after: always !important;
+                break-after: page !important;
+            }
+            .page-break::after {
+                display: none !important;
+            }
+            pre {
+                white-space: pre-wrap;
+                word-wrap: break-word;
+                background-color: #f8fafc;
+                color: #0f172a;
+                border: 1px solid #cbd5e1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="report-container">
+        <div class="no-print">
+            <span>📄 <strong>StudyPilot AI - Mini-Project Report (Ready for Submission)</strong></span>
+            <button class="print-btn" onclick="window.print()">Print / Save as PDF (Ctrl + P)</button>
+        </div>
+        <h1>A Mini-Project Report</h1>
+<p>On</p>
+<h2><strong>“StudyPilot AI: Autonomous Study Productivity &amp; Syllabus Tracking Ecosystem”</strong></h2>
+<p><em>Submitted in partial fulfillment of the requirements for the Degree of</em></p>
+<h3><strong>Bachelor of Technology</strong></h3>
+<p>in  </p>
+<h3><strong>Computer Science &amp; Engineering</strong></h3>
+<hr>
+<h3><strong>Submitted by:</strong></h3>
+<ol>
+<li><strong>DEEPAK PANDEY</strong> (Roll No: <strong>2501660100055</strong>)  </li>
+<li><strong>AVANI PATHAK</strong> (Roll No: <strong>2501660100047</strong>)  </li>
+<li><strong>ELMA KHAN</strong> (Roll No: <strong>2501660100065</strong>)</li>
+</ol>
+<hr>
+<h3><strong>Under the guidance of:</strong></h3>
+<p><strong>Mr. Srinath Dwivedi</strong><br><em>(HOD &amp; Assistant Professor, Department of Computer Science &amp; Engineering)</em></p>
+<br/><pre><code>             =========================================
+             Dr. Ambedkar Institute of Technology for
+                            Divyangjan
+                           (2025–2026)
+                  AKTU LUCKNOW, UTTAR PRADESH
+             =========================================
+</code></pre>
+<hr>
+<div class="page-break"></div>
+<h2><strong>CERTIFICATE OF APPROVAL</strong></h2>
+<p>This is to certify that <strong>DEEPAK PANDEY (2501660100055)</strong>, <strong>AVANI PATHAK (2501660100047)</strong>, and <strong>ELMA KHAN (2501660100065)</strong> have successfully completed the mini-project entitled:</p>
+<blockquote>
+<h3><strong>“StudyPilot AI: Autonomous Study Productivity &amp; Syllabus Tracking Ecosystem”</strong></h3>
+</blockquote>
+<p>under the able guidance of <strong>Mr. Srinath Dwivedi</strong>, toward the partial fulfillment of the requirements for the degree of <strong>Bachelor of Technology in Computer Science &amp; Engineering</strong> affiliated with <strong>Dr. A.P.J. Abdul Kalam Technical University (AKTU), Lucknow</strong>.</p>
+<p><br/><br/></p>
+<hr>
+<p><strong>Mr. Srinath Dwivedi</strong><br>Project Head (HoD) &amp; Assistant Professor<br>Department of Computer Science &amp; Engineering<br>Dr. Ambedkar Institute of Technology for Divyangjan, Kanpur  </p>
+<hr>
+<div class="page-break"></div>
+<h2><strong>CANDIDATE DECLARATION</strong></h2>
+<p>We hereby certify that the work being presented in this report, entitled <strong>“StudyPilot AI: Autonomous Study Productivity &amp; Syllabus Tracking Ecosystem”</strong>, in partial fulfillment of the requirements for the award of the degree of <strong>Bachelor of Technology in Computer Science &amp; Engineering</strong> submitted to <strong>Dr. Ambedkar Institute of Technology for Divyangjan, Kanpur</strong>, affiliated with <strong>Dr. A.P.J. Abdul Kalam Technical University, Lucknow</strong>, is an authentic record of our own work carried out during the academic session under the supervision of <strong>Mr. Srinath Dwivedi</strong>.</p>
+<p>The matter presented in this report has not been submitted elsewhere for the award of any degree or diploma from any other university or institution.</p>
+<br/><p><strong>Date:</strong> <code>16-10-2026</code><br><strong>Place:</strong> Kanpur, Uttar Pradesh  </p>
+<p><strong>Signatures of the Candidates:</strong>  </p>
+<ol>
+<li>_______________________ (<strong>DEEPAK PANDEY</strong> — 2501660100055)  </li>
+<li>_______________________ (<strong>AVANI PATHAK</strong> — 2501660100047)  </li>
+<li>_______________________ (<strong>ELMA KHAN</strong> — 2501660100065)</li>
+</ol>
+<br/><p>This is to certify that the above statement made by the candidates is correct to the best of our knowledge.</p>
+<br/><hr>
+<p><strong>Mr. Srinath Dwivedi</strong><br><em>(Project Guide &amp; Head of Department)</em>  </p>
+<hr>
+<div class="page-break"></div>
+<h2><strong>ACKNOWLEDGEMENT</strong></h2>
+<p>We are fortunate enough to have worked under the able guidance of <strong>Mr. Srinath Dwivedi</strong>, Head of Department and Assistant Professor, Department of Computer Science &amp; Engineering, <strong>Dr. Ambedkar Institute of Technology for Divyangjan, Kanpur</strong>. We wish to express our profound sense of gratitude to him. His inspiring supervision, keen interest, constructive criticism, and technical acumen have been a source of tremendous encouragement throughout this mini-project.</p>
+<p>We express our deep appreciation and sincere thanks to all faculty members and lab instructors of the Computer Science &amp; Engineering Department for their valuable support, insightful feedback, and necessary infrastructure provided to test and deploy our cloud and extension modules.</p>
+<p>We would also like to thank our parents and family members for their unconditional support, patience, and encouragement. Finally, we thank our peers and batchmates whose creative suggestions helped improve the user interface and functionality of <strong>StudyPilot AI</strong>.</p>
+<br/><p><strong>DEEPAK PANDEY (2501660100055)</strong><br><strong>AVANI PATHAK (2501660100047)</strong><br><strong>ELMA KHAN (2501660100065)</strong>  </p>
+<hr>
+<div class="page-break"></div>
+<h2><strong>LIST OF FIGURES</strong></h2>
+<table>
+<thead>
+<tr>
+<th>Figure No.</th>
+<th>Title</th>
+<th>Page No.</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Figure 3.1</strong></td>
+<td>Use Case Diagram of StudyPilot AI System</td>
+<td>7</td>
+</tr>
+<tr>
+<td><strong>Figure 3.2</strong></td>
+<td>Three-Tier Architecture of StudyPilot AI Ecosystem</td>
+<td>8</td>
+</tr>
+<tr>
+<td><strong>Figure 4.1</strong></td>
+<td>Data Flow Diagram (Level-0: Context Diagram)</td>
+<td>12</td>
+</tr>
+<tr>
+<td><strong>Figure 4.2</strong></td>
+<td>Data Flow Diagram (Level-1: Internal System Workflows)</td>
+<td>13</td>
+</tr>
+<tr>
+<td><strong>Figure 5.1</strong></td>
+<td>Telemetry Filtering &amp; 90% Threshold Completion Flowchart</td>
+<td>16</td>
+</tr>
+<tr>
+<td><strong>Figure 5.2</strong></td>
+<td>AI Practice Test Cascade Flowchart (Gemini Cascade &amp; Fallback)</td>
+<td>17</td>
+</tr>
+<tr>
+<td><strong>Figure B.1.1</strong></td>
+<td>Web Application Landing Page &amp; User Authentication Interface</td>
+<td>23</td>
+</tr>
+<tr>
+<td><strong>Figure B.2.1</strong></td>
+<td>StudyPilot Productivity Dashboard &amp; Analytics Overview</td>
+<td>24</td>
+</tr>
+<tr>
+<td><strong>Figure B.3.1</strong></td>
+<td>Interactive Syllabus Roadmap with In-Place Editing</td>
+<td>25</td>
+</tr>
+<tr>
+<td><strong>Figure B.4.1</strong></td>
+<td>Dual-Mode Practice Test Generator (Mode A &amp; Mode B)</td>
+<td>26</td>
+</tr>
+<tr>
+<td><strong>Figure B.5.1</strong></td>
+<td>SGPA Estimator &amp; Academic Exam Readiness Prediction</td>
+<td>27</td>
+</tr>
+<tr>
+<td><strong>Figure B.6.1</strong></td>
+<td>Chrome Extension UI on YouTube with Timestamp Bookmarking</td>
+<td>28</td>
+</tr>
+</tbody></table>
+<hr>
+<h2><strong>LIST OF TABLES</strong></h2>
+<table>
+<thead>
+<tr>
+<th>Table No.</th>
+<th>Title</th>
+<th>Page No.</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Table 3.1</strong></td>
+<td>Hardware Specifications for Client &amp; Host Systems</td>
+<td>10</td>
+</tr>
+<tr>
+<td><strong>Table 3.2</strong></td>
+<td>Software Environment &amp; Dependency Requirements</td>
+<td>10</td>
+</tr>
+<tr>
+<td><strong>Table 6.1</strong></td>
+<td>Test Cases and Verification Results for StudyPilot AI</td>
+<td>19</td>
+</tr>
+</tbody></table>
+<hr>
+<div class="page-break"></div>
+<h2><strong>ABSTRACT</strong></h2>
+<p>The rapid shift toward digital education has established YouTube as the primary learning resource for engineering students preparing for university examinations. However, self-paced video learning presents critical challenges: lack of curriculum alignment, passive watch habits, inaccurate self-assessment, and fragmented note-taking. </p>
+<p>To overcome these deficiencies, this project presents <strong>StudyPilot AI</strong>, an autonomous study productivity and syllabus tracking ecosystem engineered specifically for engineering curricula (AKTU B.Tech Computer Science &amp; Engineering). The platform combines a <strong>Manifest V3 Google Chrome Extension</strong> with a responsive cloud web application built with modern web technologies, <strong>Google Firebase</strong>, and <strong>Google Gemini Generative AI</strong>.</p>
+<p>The Chrome extension monitors HTML5 video player telemetry in real time, filtering out forward-seeking skips to ensure authentic watch-time calculations and automatically marking syllabus topics as completed once a 90% completion threshold is satisfied. It provides single-click bookmarking of precise video timestamps (<code>MM:SS</code>), allowing instant navigation back to critical explanations. </p>
+<p>The web platform features an interactive syllabus roadmap supporting in-place editing across multiple domains (AKTU Academic, Data Structures &amp; Algorithms, Web Development, and Custom Goals). Furthermore, StudyPilot AI integrates a <strong>Dual-Mode Practice Test Engine</strong> powered by a multi-model Gemini API fallback cascade (<code>gemini-1.5-flash</code> → <code>gemini-2.0-flash</code> → <code>gemini-1.5-pro</code> alongside offline algorithmic question generation) and an <strong>SGPA Estimator</strong> implementing official AKTU credit-weighted formulas alongside predictive readiness modeling. The system has been validated across functional, compatibility, and security dimensions, offering a comprehensive, zero-cost, and user-centric solution for modern students.</p>
+<hr>
+<div class="page-break"></div>
+<h2><strong>LIST OF CONTENTS</strong></h2>
+<ul>
+<li><p><strong>Chapter 1: INTRODUCTION</strong> .................................................................... 1</p>
+<ul>
+<li>1.1 Problem Statement ............................................................................ 1</li>
+<li>1.2 Objectives .......................................................................................... 2</li>
+<li>1.3 Purpose ............................................................................................. 2</li>
+<li>1.4 Scope of the Project ........................................................................... 3</li>
+</ul>
+</li>
+<li><p><strong>Chapter 2: LITERATURE SURVEY</strong> .......................................................... 4</p>
+<ul>
+<li>2.1 Existing System ................................................................................. 4</li>
+<li>2.2 Limitations of Existing System ............................................................ 5</li>
+<li>2.3 Proposed System ............................................................................... 5</li>
+</ul>
+</li>
+<li><p><strong>Chapter 3: SYSTEM ANALYSIS AND DESIGN</strong> ....................................... 6</p>
+<ul>
+<li>3.1 Software Requirement Specifications (SRS) ........................................ 6<ul>
+<li>3.1.1 Introduction ................................................................................ 6</li>
+<li>3.1.2 Purpose of the System ............................................................... 6</li>
+<li>3.1.3 Scope of the System ................................................................... 6</li>
+<li>3.1.4 Intended Users ............................................................................ 7</li>
+<li>3.1.5 Functional Requirements ........................................................... 7</li>
+<li>3.1.6 Non-Functional Requirements ................................................... 7</li>
+<li>3.1.7 Constraints ................................................................................. 8</li>
+<li>3.1.8 Use Cases &amp; Diagram ................................................................. 8</li>
+</ul>
+</li>
+<li>3.2 System Architecture ........................................................................... 8</li>
+<li>3.3 Workflow of the System ..................................................................... 9</li>
+<li>3.4 System Modules ................................................................................ 9</li>
+<li>3.5 System Requirements ......................................................................... 10<ul>
+<li>3.5.1 Hardware Requirements ............................................................ 10</li>
+<li>3.5.2 Software Requirements ............................................................. 10</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>Chapter 4: DATA FLOW DIAGRAM (DFD)</strong> .............................................. 11</p>
+<ul>
+<li>4.1 DFD Level-0 (Context Diagram) .......................................................... 11</li>
+<li>4.2 DFD Level-1 (Detailed Diagram) .......................................................... 12</li>
+</ul>
+</li>
+<li><p><strong>Chapter 5: IMPLEMENTATION</strong> ................................................................. 14</p>
+<ul>
+<li>5.1 Technology Used ............................................................................... 14</li>
+<li>5.2 Module Description ............................................................................ 14</li>
+<li>5.3 Algorithms / Methodology ................................................................. 15</li>
+<li>5.4 Working of the System ....................................................................... 17</li>
+</ul>
+</li>
+<li><p><strong>Chapter 6: TESTING AND RESULTS</strong> ....................................................... 18</p>
+<ul>
+<li>6.1 Testing Strategy ................................................................................ 18</li>
+<li>6.2 Test Cases Table ................................................................................ 19</li>
+<li>6.3 Result Analysis ................................................................................... 20</li>
+</ul>
+</li>
+<li><p><strong>Chapter 7: CONCLUSION</strong> ......................................................................... 21</p>
+<ul>
+<li>7.1 Conclusion ......................................................................................... 21</li>
+<li>7.2 Future Scope ...................................................................................... 21</li>
+</ul>
+</li>
+<li><p><strong>ANNEXURE</strong> .............................................................................................. 22</p>
+<ul>
+<li>Annexure - A: Source Code Snippets ....................................................... 22</li>
+<li>Annexure - B: Application Screenshots &amp; Output Results ......................... 26</li>
+</ul>
+</li>
+<li><p><strong>REFERENCES</strong> ........................................................................................... 29</p>
+</li>
+</ul>
+<hr>
+<div class="page-break"></div>
+<h1><strong>CHAPTER 1</strong></h1>
+<h1><strong>INTRODUCTION</strong></h1>
+<p>In modern university education, online video platforms—predominantly YouTube—have become indispensable educational resources for undergraduate engineering students. Video lectures provide detailed visual explanations of intricate concepts spanning Data Structures, Database Management Systems, Computer Networks, and Operating Systems. However, despite the abundance of high-quality instructional content, the lack of structured tracking and automated curriculum mapping prevents students from translating passive video consumption into active exam readiness.</p>
+<p><strong>StudyPilot AI</strong> bridges this academic divide by providing an intelligent, autonomous tracking and assessment ecosystem. It consists of an un-intrusive <strong>Google Chrome Extension (Manifest V3)</strong> that tracks genuine lecture playback on YouTube, coupled with a full-featured, responsive <strong>Web Productivity Platform</strong>. The system maps unstructured YouTube study time directly to standardized AKTU syllabus units, offers automated AI assessment generation using <strong>Google Gemini</strong>, and provides realistic academic grading estimations.</p>
+<hr>
+<h3><strong>1.1 Problem Statement</strong></h3>
+<p>Students enrolled in competitive university programs like AKTU B.Tech CSE encounter fundamental roadblocks when utilizing free online video platforms for academic preparation:</p>
+<ol>
+<li><strong>Unstructured &amp; Fragmented Learning:</strong> YouTube algorithms optimize for watch engagement rather than structured syllabus coverage. Lecture playlists rarely correspond to official university unit boundaries.</li>
+<li><strong>False Sense of Mastery (Passive Watching):</strong> Students often watch hours of video content or skip forward through explanations without actively verifying their retention, leading to poor performance in semester exams.</li>
+<li><strong>Loss of Critical Explanations &amp; Timestamps:</strong> Important formulas, proofs, and circuit diagrams explained at specific points in long lectures are difficult to retrieve during revision without timestamped notes.</li>
+<li><strong>Lack of Automated, Curriculum-Aligned Self-Testing:</strong> Generating practice multiple-choice questions (MCQs) that mirror actual university syllabus units is tedious and unavailable on free platforms.</li>
+<li><strong>Absence of Real-Time Academic Readiness Prediction:</strong> Students have no objective mechanism to calculate their expected SGPA or identify weak subject areas prior to university examinations.</li>
+</ol>
+<hr>
+<h3><strong>1.2 Objectives</strong></h3>
+<p>The primary objectives of the <strong>StudyPilot AI</strong> ecosystem are:</p>
+<ol>
+<li>To engineer a lightweight, Manifest V3 compliant Chrome Extension capable of capturing genuine YouTube video playback telemetry without intruding on user experience.</li>
+<li>To design an algorithmic seek-detection filter that prevents simulated progress by filtering out fast-forwarding or scrub actions.</li>
+<li>To build an interactive, in-place editable Syllabus Roadmap that models university curricula hierarchically (<code>Domain → Subject → Unit → Topic → Learning Resource</code>).</li>
+<li>To integrate a dual-mode generative AI practice test module utilizing the Google Gemini API cascade alongside an offline deterministic fallback generator.</li>
+<li>To develop a credit-weighted SGPA calculation engine conforming to official AKTU university regulations, supplemented by a progress-based readiness forecasting model.</li>
+<li>To implement cross-origin secure synchronization between browser storage, local endpoints, and Google Firebase Firestore cloud database.</li>
+</ol>
+<hr>
+<h3><strong>1.3 Purpose</strong></h3>
+<p>The core purpose of <strong>StudyPilot AI</strong> is to transform passive video watching into active, measurable, and goal-directed academic productivity. By providing automated watch-time logging, unit-level progress indicators, and instant AI-driven knowledge validation, the platform empowers students to prepare systematically for technical examinations. The project promotes disciplined study habits, transparent progress monitoring, and stress reduction through data-backed academic predictions.</p>
+<hr>
+<h3><strong>1.4 Scope of the Project</strong></h3>
+<p>The scope of <strong>StudyPilot AI</strong> encompasses:</p>
+<ul>
+<li>Real-time HTML5 video player tracking across all YouTube lecture and playlist URLs.</li>
+<li>Comprehensive semester coverage for AKTU B.Tech CSE (Semesters 1 through 8), alongside dedicated tracks for Data Structures &amp; Algorithms (DSA), Web Development, and user-defined custom domains.</li>
+<li>Cloud data synchronization with Firebase Authentication and user-isolated Firestore security policies.</li>
+<li>AI-driven practice test generation covering custom topics as well as student progress history.</li>
+<li>Universal responsive accessibility across desktop, tablet, and mobile browsers through cloud hosting on Vercel.</li>
+</ul>
+<hr>
+<div class="page-break"></div>
+<h1><strong>CHAPTER 2</strong></h1>
+<h1><strong>LITERATURE SURVEY</strong></h1>
+<p>A review of existing literature and commercially available educational tools reveals significant research in computerized study aids, learning analytics, and online productivity tools. However, existing implementations leave notable gaps when applied to specific university engineering syllabi.</p>
+<hr>
+<h3><strong>2.1 Existing System</strong></h3>
+<p>Current educational assistance tools generally fall into three separate categories:</p>
+<ol>
+<li><strong>Generic Website Blockers &amp; Timers:</strong> Applications such as <em>Forest</em>, <em>Pomofocus</em>, and <em>StayFocusd</em> record elapsed study time. They rely on manual stopwatch initiation or block distraction websites entirely.</li>
+<li><strong>Generic Video Learning Platforms:</strong> Platforms such as <em>Coursera</em>, <em>edX</em>, and <em>Udemy</em> provide built-in quizzes and lecture completion checkboxes; however, they require students to consume only platform-hosted content and do not map to regional university syllabi like AKTU.</li>
+<li><strong>General AI Quiz Creators:</strong> Web tools such as <em>Quizlet</em> or <em>Kahoot</em> allow question generation, but require users to manually paste study text or upload documents rather than connecting automatically with their active watch history.</li>
+</ol>
+<hr>
+<h3><strong>2.2 Limitations of Existing System</strong></h3>
+<p>Existing study platforms exhibit several structural limitations:</p>
+<ul>
+<li><strong>No Direct YouTube Telemetry:</strong> Website timers cannot inspect the internal playback state of third-party video players on YouTube.</li>
+<li><strong>Vulnerability to Cheat Behavior:</strong> Traditional timers count background tab presence as productive study time, even when the video is paused or the user skips directly to the end.</li>
+<li><strong>Absence of Regional Curriculum Mapping:</strong> No mainstream platform correlates video tutorials to AKTU unit structures (Unit 1 to Unit 5) and credit allocations.</li>
+<li><strong>Commercial Paywalls:</strong> High-end learning analytics platforms require expensive subscriptions, restricting accessibility for college students.</li>
+<li><strong>Fragmented Workflows:</strong> Students must manually switch between timer apps, YouTube tabs, paper syllabi, and note apps, inducing cognitive overload.</li>
+</ul>
+<hr>
+<h3><strong>2.3 Proposed System</strong></h3>
+<p><strong>StudyPilot AI</strong> resolves these limitations through an integrated, zero-cost, dual-layer architecture:</p>
+<ul>
+<li><strong>Automated Video Telemetry:</strong> Uses Chrome Extension Content Scripts to read HTML5 video properties directly from the YouTube DOM, calculating genuine watchtime every 2.5 seconds.</li>
+<li><strong>Anti-Cheat Heuristic Filter:</strong> Compares video time jumps against real-world clock deltas to eliminate skipped intervals from watch calculations.</li>
+<li><strong>Syllabus Roadmap Integration:</strong> Embeds the complete AKTU CSE syllabus with unit and topic checkboxes, live percentage trackers, and custom module creation.</li>
+<li><strong>Targeted AI Assessment:</strong> Uses Google Gemini to generate targeted multiple-choice assessments based strictly on topics the student has completed.</li>
+<li><strong>Unified Academic Suite:</strong> Unites video tracking, timestamp bookmarks, task management, syllabus roadmaps, and SGPA prediction into a single interface.</li>
+</ul>
+<hr>
+<div class="page-break"></div>
+<h1><strong>CHAPTER 3</strong></h1>
+<h1><strong>SYSTEM ANALYSIS AND DESIGN</strong></h1>
+<hr>
+<h3><strong>3.1 Software Requirement Specification (SRS)</strong></h3>
+<h4><strong>3.1.1 Introduction</strong></h4>
+<p>The Software Requirement Specification (SRS) defines all functional, operational, and performance parameters of <strong>StudyPilot AI</strong>, establishing the technical foundation prior to implementation.</p>
+<h4><strong>3.1.2 Purpose of the System</strong></h4>
+<p>The system autonomously records YouTube learning duration, synchronizes progress to cloud storage, facilitates syllabus unit tracking, generates formative assessments, and predicts academic performance for university students.</p>
+<h4><strong>3.1.3 Scope of the System</strong></h4>
+<p>The system is implemented as a client-side Google Chrome extension interacting with a modular Single-Page Application (SPA) backed by Google Firebase Authentication and Cloud Firestore.</p>
+<h4><strong>3.1.4 Intended Users</strong></h4>
+<ul>
+<li>Undergraduate engineering students (AKTU CSE).</li>
+<li>Self-taught programmers preparing for Data Structures and Web Development interviews.</li>
+<li>Academic advisors and mentors seeking verifiable study analytics.</li>
+</ul>
+<h4><strong>3.1.5 Functional Requirements</strong></h4>
+<ul>
+<li><strong>FR-01 (Authentication):</strong> Secure user registration, credential validation, and session management via Firebase Auth.</li>
+<li><strong>FR-02 (Video Telemetry):</strong> Automated extraction of YouTube video ID, title, channel name, duration, and current playback time.</li>
+<li><strong>FR-03 (Seek Filtering):</strong> Detection of manual scrubs greater than 20 seconds to prevent fraudulent progress accumulation.</li>
+<li><strong>FR-04 (Completion Logic):</strong> Automated classification of lectures as &quot;Completed&quot; upon reaching the 90% watch threshold.</li>
+<li><strong>FR-05 (Timestamp Bookmarking):</strong> Preservation of precise playback seconds (<code>&amp;t=...s</code>) with user annotations.</li>
+<li><strong>FR-06 (Roadmap Management):</strong> Dynamic rendering and in-place CRUD operations on subjects, units, and curriculum topics.</li>
+<li><strong>FR-07 (AI Test Engine):</strong> Automated generation of 4-option MCQs with answer keys and explanations via Google Gemini REST API.</li>
+<li><strong>FR-08 (SGPA Calculation):</strong> Accurate calculation of AKTU semester grade points based on credit weights.</li>
+</ul>
+<h4><strong>3.1.6 Non-Functional Requirements</strong></h4>
+<ul>
+<li><strong>NFR-01 (Performance):</strong> Zero-latency UI updates using local cache fallback (&lt; 100 ms render).</li>
+<li><strong>NFR-02 (Security):</strong> Firestore document isolation using authenticated UID matching rules.</li>
+<li><strong>NFR-03 (Reliability):</strong> Seamless operation of offline concept test generators when third-party AI APIs are unreachable.</li>
+<li><strong>NFR-04 (Usability):</strong> Intuitive navigation complying with WCAG contrast standards and responsive mobile viewports.</li>
+</ul>
+<h4><strong>3.1.7 Constraints</strong></h4>
+<ul>
+<li>Chrome Extension requires a Chromium-based browser (Chrome, Edge, Brave).</li>
+<li>Internet connectivity is required for Firebase cloud synchronization and Gemini AI queries.</li>
+</ul>
+<h4><strong>3.1.8 Use Cases</strong></h4>
+<ul>
+<li><strong>Actor:</strong> Engineering Student / User.</li>
+<li><strong>Core Use Cases:</strong> Register/Login, Watch YouTube Lecture, Bookmark Timestamp, Track Roadmap Topic, Generate Custom AI Test, Take Progress-Based Test, Calculate/Predict SGPA, Manage Study Tasks.</li>
+</ul>
+<pre><code class="language-text">       +-------------------------------------------------------------+
+       |                  STUDYPILOT USE CASE DIAGRAM                |
+       +-------------------------------------------------------------+
+
+                  +-----------------------------------+
+                  |        StudyPilot AI System       |
+                  |                                   |
+                  |   ( User Authentication )         |
+                  |              ^                    |
+                  |              |                    |
+                  |   ( Track YouTube Watchtime )     |
+                  |              ^                    |
+                  |              |                    |
+   +----------+   |   ( Bookmark Video Timestamp )    |
+   |          |   |              ^                    |
+   | Student  |---|              |                    |
+   |  (User)  |   |   ( Check Off Syllabus Topics )   |
+   |          |   |              ^                    |
+   +----------+   |              |                    |
+                  |   ( Generate Practice Tests )     |
+                  |              ^                    |
+                  |              |                    |
+                  |   ( Calculate &amp; Predict SGPA )    |
+                  +-----------------------------------+
+
+            Figure 3.1: Use Case Diagram of StudyPilot AI System
+</code></pre>
+<hr>
+<h3><strong>3.2 System Architecture</strong></h3>
+<p>The architecture follows a modular, three-tier decoupled structure:</p>
+<pre><code class="language-text">  +-------------------------------------------------------------------------+
+  |                             PRESENTATION TIER                           |
+  |  - Web Application: Dashboard, Roadmap, Tests, Bookmarks, SGPA, Todos   |
+  |  - Chrome Extension Popup UI (popup.html / popup.js)                    |
+  |  - Modern Vanilla CSS Design System with Responsive Media Layouts       |
+  +------------------------------------+------------------------------------+
+                                       |
+                                       v
+  +-------------------------------------------------------------------------+
+  |                             APPLICATION TIER                            |
+  |  - Content Script Telemetry &amp; DOM Observers (content.js)                |
+  |  - Extension Service Worker &amp; Message Router (background.js)            |
+  |  - Zero-Port Web Bridge Layer (bridge.js &lt;-&gt; sync.js)                   |
+  |  - Dynamic Domain &amp; In-Place Roadmap Engine (domain-manager.js)         |
+  |  - Gemini Generative AI Cascade &amp; Fallback Engine (tests.js)            |
+  |  - AKTU Credit-Weighted SGPA Formula Engine (sgpa.js)                   |
+  +------------------------------------+------------------------------------+
+                                       |
+                                       v
+  +-------------------------------------------------------------------------+
+  |                               DATA TIER                                 |
+  |  - Browser Local Persistence: chrome.storage.local &amp; window.localStorage|
+  |  - Identity &amp; Security: Google Firebase Authentication                  |
+  |  - Cloud Document Store: Google Cloud Firestore Database                |
+  +-------------------------------------------------------------------------+
+
+         Figure 3.2: Three-Tier Architecture of StudyPilot AI System
+</code></pre>
+<hr>
+<h3><strong>3.3 Workflow of the System</strong></h3>
+<ol>
+<li>User authenticates via the Web Application.</li>
+<li>Extension detects YouTube watch URL and initializes tracking via <code>content.js</code>.</li>
+<li>HTML5 video playback telemetry is sampled every 2.5 seconds; genuine watch seconds are logged to <code>chrome.storage.local</code>.</li>
+<li>User bookmarks notable video timestamps or completes 90% of duration.</li>
+<li>Injected <code>bridge.js</code> broadcasts updates to web app <code>sync.js</code>, which commits batch updates to Cloud Firestore.</li>
+<li>Web app updates syllabus progress bars, daily streaks, and study charts.</li>
+<li>User navigates to Practice Tests to generate AI MCQs derived from completed topics.</li>
+</ol>
+<hr>
+<h3><strong>3.4 System Modules</strong></h3>
+<ol>
+<li><strong>Telemetry &amp; Anti-Cheat Tracker Module:</strong> Operates inside YouTube tabs, filters seeks, and logs authentic watch time.</li>
+<li><strong>Web-to-Extension Bridge Module:</strong> Manages cross-context messaging without opening external server ports.</li>
+<li><strong>Multi-Domain Roadmap Engine:</strong> Manages hierarchical subjects, units, and topics for AKTU, DSA, WebDev, and custom domains.</li>
+<li><strong>AI Practice Test Engine:</strong> Constructs prompts, cascades across Gemini model versions, normalizes option indices, and scores answers.</li>
+<li><strong>AKTU SGPA Estimator Module:</strong> Executes credit-weighted calculations and empirical readiness prediction algorithms.</li>
+<li><strong>Cloud Sync &amp; Security Module:</strong> Authenticates users and enforces document-level security rules.</li>
+</ol>
+<hr>
+<h3><strong>3.5 System Requirements</strong></h3>
+<h4><strong>3.5.1 Hardware Requirements</strong></h4>
+<p><em>Table 3.1: Hardware Specifications for Client &amp; Host Systems</em></p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Minimum Specification</th>
+<th>Recommended Specification</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Processor</strong></td>
+<td>Intel Core i3 / AMD Ryzen 3 (Dual Core 2.0 GHz)</td>
+<td>Intel Core i5 / AMD Ryzen 5 or higher</td>
+</tr>
+<tr>
+<td><strong>RAM</strong></td>
+<td>4 GB</td>
+<td>8 GB or higher</td>
+</tr>
+<tr>
+<td><strong>Storage</strong></td>
+<td>500 MB free hard disk space</td>
+<td>2 GB SSD free space</td>
+</tr>
+<tr>
+<td><strong>Display Resolution</strong></td>
+<td>1280 × 720 pixels</td>
+<td>1920 × 1080 pixels</td>
+</tr>
+<tr>
+<td><strong>Network Interface</strong></td>
+<td>Broadband Internet (512 Kbps)</td>
+<td>High-speed Wi-Fi / LAN (10 Mbps+)</td>
+</tr>
+</tbody></table>
+<h4><strong>3.5.2 Software Requirements</strong></h4>
+<p><em>Table 3.2: Software Environment &amp; Dependency Requirements</em></p>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Environment &amp; Dependencies</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Operating System</strong></td>
+<td>Windows 10/11, macOS, or Linux</td>
+</tr>
+<tr>
+<td><strong>Web Browser</strong></td>
+<td>Google Chrome (v110+), Microsoft Edge, or Chromium-based browser</td>
+</tr>
+<tr>
+<td><strong>Front-End Technologies</strong></td>
+<td>HTML5, CSS3 Custom Properties, JavaScript ES6+ (Native Modules)</td>
+</tr>
+<tr>
+<td><strong>Extension Framework</strong></td>
+<td>Chrome Manifest V3 (Service Workers, Content Scripts, Alarms)</td>
+</tr>
+<tr>
+<td><strong>Cloud Infrastructure</strong></td>
+<td>Google Firebase (Auth, Cloud Firestore), Vercel Static CDN</td>
+</tr>
+<tr>
+<td><strong>External APIs</strong></td>
+<td>Google Gemini Generative Language REST API (<code>gemini-1.5-flash</code>, <code>2.0-flash</code>)</td>
+</tr>
+<tr>
+<td><strong>Data Visualization</strong></td>
+<td>Chart.js (v4.4.3 via secure CDN)</td>
+</tr>
+</tbody></table>
+<hr>
+<div class="page-break"></div>
+<h1><strong>CHAPTER 4</strong></h1>
+<h1><strong>DATA FLOW DIAGRAM (DFD)</strong></h1>
+<hr>
+<h3><strong>4.1 DFD Level-0 (Context Diagram)</strong></h3>
+<p>The Level-0 Context Diagram illustrates the interaction boundary between the external student user, the browser extension, third-party services (YouTube, Gemini), and the StudyPilot platform.</p>
+<pre><code class="language-text"> +---------------------------------------------------------------------------+
+ |                    DATA FLOW DIAGRAM (LEVEL-0: CONTEXT)                   |
+ +---------------------------------------------------------------------------+
+
+                             +------------------+
+                             |   YouTube API /  |
+                             | HTML5 Player DOM |
+                             +--------+---------+
+                                      |
+                               Video Telemetry
+                                      |
+                                      v
+   +--------------+  User Actions   +-------------------+  Test Prompts  +-----------+
+   |              +----------------&gt;|                   +---------------&gt;|  Google   |
+   | Engineering  |                 |   STUDYPILOT AI   |                |  Gemini   |
+   |   Student    |&lt;----------------+     ECOSYSTEM     |&lt;---------------+ Generative|
+   |              |  Analytics,     |                   |  MCQ JSON      |    AI     |
+   +--------------+  Roadmaps, Tests+---------+---------+                +-----------+
+                                              |
+                                      Cloud Sync &amp; Auth
+                                              |
+                                              v
+                                    +-------------------+
+                                    |  Google Firebase  |
+                                    |  (Auth + Database)|
+                                    +-------------------+
+
+        Figure 4.1: Data Flow Diagram (Level-0) of StudyPilot AI System
+</code></pre>
+<hr>
+<h3><strong>4.2 DFD Level-1 (Detailed Diagram)</strong></h3>
+<p>The Level-1 Data Flow Diagram decomposes the system into its operational sub-processes and data stores.</p>
+<pre><code class="language-text"> +---------------------------------------------------------------------------+
+ |                   DATA FLOW DIAGRAM (LEVEL-1: DECOMPOSED)                 |
+ +---------------------------------------------------------------------------+
+
+               +--------------+
+               | Student User |
+               +-------+------+
+                       |
+                       | (1) Watch YouTube Video
+                       v
+               +-------+--------------------+
+               | 1.0 Telemetry Tracking     |
+               |     (content.js)           |
+               +-------+--------------------+
+                       |
+        Filtered Watch | (2) Write Local Video Log
+                       v
+               [ D1: chrome.storage.local ]
+                       |
+        Storage Change | (3) Broadcast Event
+                       v
+               +-------+--------------------+
+               | 2.0 Web Bridge &amp; Sync      |
+               |     (bridge.js / sync.js)  |
+               +-------+--------------------+
+                       |
+          Batch Writes | (4) Persist Cloud Records
+                       v
+               [ D2: Cloud Firestore (users, videos, bookmarks) ]
+                       |
+                       +-----------------------+
+                       | Read Progress Records |
+                       v                       v
+        +--------------+-----+           +-----+--------------+
+        | 3.0 Roadmap Engine |           | 4.0 AI Test Engine |
+        |     (roadmap.js)   |           |     (tests.js)     |
+        +--------------+-----+           +-----+--------------+
+                       |                       |
+            Calculated | Percentage            | Generated MCQs
+                       v                       v
+               +-------+-----------------------+------+
+               | 5.0 Presentation &amp; Results Display   |
+               |     (Dashboard, Roadmap, Tests, SGPA)|
+               +--------------------------------------+
+
+        Figure 4.2: Data Flow Diagram (Level-1) of StudyPilot AI System
+</code></pre>
+<hr>
+<div class="page-break"></div>
+<h1><strong>CHAPTER 5</strong></h1>
+<h1><strong>IMPLEMENTATION</strong></h1>
+<hr>
+<h3><strong>5.1 Technology Used</strong></h3>
+<ul>
+<li><strong>Front-End Architecture:</strong> Built using HTML5 semantic elements, modern Vanilla CSS variables, and native ECMAScript 6 (ES6) modules without heavy external framework bloat.</li>
+<li><strong>Extension Platform:</strong> Chrome Extensions Manifest V3 utilizing lightweight, non-persistent background Service Workers.</li>
+<li><strong>Backend &amp; Cloud Database:</strong> Google Firebase Modular SDK (v10.12.2) executing client-side authenticated transactions directly against Google Cloud Firestore.</li>
+<li><strong>AI Processing:</strong> Google Generative AI REST API utilizing multi-turn prompt engineering to parse rigorous multiple-choice assessments formatted in pure JSON.</li>
+<li><strong>Visualization:</strong> Chart.js for rendering weekly study curves and syllabus completion doughnut charts.</li>
+<li><strong>Deployment Pipelines:</strong> Git source control, GitHub remote repositories, and Vercel Edge Network cloud deployment.</li>
+</ul>
+<hr>
+<h3><strong>5.2 Module Description</strong></h3>
+<h4><strong>1. Telemetry Capture Module (<code>extension/content.js</code>)</strong></h4>
+<p>Injected directly into YouTube watch pages. It creates a recurring timer checking <code>video.currentTime</code> every 2,500 milliseconds. It queries metadata from the active YouTube DOM, extracts playlists, and evaluates whether watch progress meets the 90% threshold.</p>
+<h4><strong>2. Service Worker Storage Router (<code>extension/background.js</code>)</strong></h4>
+<p>Runs as a background worker responding to runtime messages. It commits video entries into <code>chrome.storage.local</code>, updates total daily minutes, and coordinates alarms for study notifications.</p>
+<h4><strong>3. Responsive Bridge Module (<code>extension/bridge.js</code> &amp; <code>website/js/sync.js</code>)</strong></h4>
+<p>Solves the cross-origin communication problem between web pages and browser extensions. <code>bridge.js</code> listens to <code>chrome.storage.onChanged</code> and dispatches <code>window.postMessage</code> payloads to the web dashboard, avoiding CORS limitations and port failures.</p>
+<h4><strong>4. In-Place Editable Roadmap Engine (<code>website/js/roadmap.js</code>)</strong></h4>
+<p>Provides full CRUD capabilities for academic subjects, units, topics, and attached URLs directly within the browser. Edits are instantly reflected in memory and saved to Firestore under user-isolated collections (<code>users/{uid}/customRoadmaps</code>).</p>
+<h4><strong>5. Practice Test Module (<code>website/js/tests.js</code>)</strong></h4>
+<p>Implements dual modes: Mode A (Custom curriculum test) and Mode B (Test based on completed roadmap topics). Implements a 4-tier model cascade across Gemini endpoints, option index normalization (converting letters &#39;A&#39;-&#39;D&#39; to indices 0–3), and an offline concept bank fallback.</p>
+<h4><strong>6. Academic SGPA Estimator Module (<code>website/js/sgpa.js</code>)</strong></h4>
+<p>Encapsulates official AKTU university credit-weighting rules and grade mapping logic. It dynamically computes semester SGPA while offering an empirical academic readiness predictor based on syllabus completion and mock test results.</p>
+<hr>
+<h3><strong>5.3 Algorithms / Methodology</strong></h3>
+<h4><strong>1. Anti-Cheat Video Telemetry Algorithm</strong></h4>
+<p>To ensure genuine study time tracking without false increments from skipping:</p>
+<pre><code class="language-text">Let lastTime = previous playback timestamp
+Let currentTime = video.currentTime
+Let delta = currentTime - lastTime
+
+If delta &gt; 0 AND delta &lt;= 20 seconds:
+    watchedSeconds = watchedSeconds + delta
+    lastTime = currentTime
+Else If delta &gt; 20 seconds:
+    // User scrubbed/skipped forward; do not count skipped interval
+    lastTime = currentTime
+Else:
+    // Video is paused, buffered, or rewound
+    lastTime = currentTime
+
+If (currentTime / video.duration) &gt;= 0.90:
+    mark video as COMPLETED
+</code></pre>
+<pre><code class="language-text">  +-------------------------------------------------------------+
+  |    FLOWCHART 5.1: TELEMETRY &amp; 90% COMPLETION ALGORITHM      |
+  +-------------------------------------------------------------+
+
+                     [ Sample Player Time ]
+                               |
+                               v
+                     [ Calculate Time Delta ]
+                               |
+                    +----------+----------+
+                    |                     |
+             delta &lt;= 20 sec        delta &gt; 20 sec
+                    |                     |
+                    v                     v
+         [ Add delta to Watchtime ]  [ Skip Counted: Ignore Jump ]
+                    |                     |
+                    +----------+----------+
+                               |
+                               v
+               [ Check (currentTime / duration) ]
+                               |
+                   +-----------+-----------+
+                   |                       |
+               &gt;= 90%                    &lt; 90%
+                   |                       |
+                   v                       v
+         [ Mark Video COMPLETED ]     [ Keep In-Progress ]
+
+    Figure 5.1: Telemetry Filtering &amp; 90% Threshold Completion
+</code></pre>
+<hr>
+<h4><strong>2. Gemini Multi-Model Cascade Algorithm</strong></h4>
+<p>To guarantee high test generator reliability without service disruptions:</p>
+<pre><code class="language-text">Models List = [&#39;gemini-1.5-flash&#39;, &#39;gemini-2.0-flash&#39;, &#39;gemini-1.5-flash-latest&#39;, &#39;gemini-1.5-pro&#39;]
+
+For each model in Models List:
+    Try:
+        Dispatch POST request with structured prompt to Gemini REST API
+        Extract text response and sanitize markdown fences (```json ... ```)
+        Parse JSON array of question objects
+        If parsed array is valid AND questions &gt;= requestedCount:
+            Return parsed questions to UI
+            Break loop
+    Catch Error:
+        Log model warning, continue to next model in cascade
+
+If all models fail OR no API key is provided:
+    Invoke generateOfflineFallback(subjectName, topicNames, numQ)
+    Return deterministic concept questions to UI
+</code></pre>
+<pre><code class="language-text">  +-------------------------------------------------------------+
+  |       FLOWCHART 5.2: GEMINI API FALLBACK CASCADE            |
+  +-------------------------------------------------------------+
+
+                     [ User Requests Test ]
+                               |
+                               v
+                    [ Check Gemini API Key ]
+                               |
+                   +-----------+-----------+
+                   |                       |
+               Key Found                No Key
+                   |                       |
+                   v                       |
+         [ Try gemini-1.5-flash ]          |
+                   |                       |
+             +-----+-----+                 |
+             |           |                 |
+          Success      Error               |
+             |           |                 |
+             |           v                 |
+             |   [ Try gemini-2.0-flash ]  |
+             |           |                 |
+             |     +-----+-----+           |
+             |     |           |           |
+             |  Success      Error         |
+             |     |           |           |
+             |     |           v           |
+             |     |     [ Try Backup ]    |
+             |     |           |           |
+             |     |     +-----+-----+     |
+             |     |     |           |     |
+             |     |  Success      Error   |
+             |     |     |           |     |
+             v     v     v           v     v
+           [ Display AI MCQs ]  [ Offline Question Bank ]
+
+        Figure 5.2: AI Practice Test Cascade Architecture
+</code></pre>
+<hr>
+<h4><strong>3. AKTU SGPA Credit-Weighted Formula</strong></h4>
+<p>According to AKTU academic ordinances, Semester Grade Point Average (SGPA) is computed as:</p>
+<p>$$\text{SGPA} = \frac{\sum_{i=1}^{n} (C_i \times G_i)}{\sum_{i=1}^{n} C_i}$$</p>
+<p>Where:</p>
+<ul>
+<li>$n$ = Total number of subjects in the semester.</li>
+<li>$C_i$ = Credits assigned to subject $i$.</li>
+<li>$G_i$ = Grade Point earned in subject $i$, determined by percentage score bands:<ul>
+<li>$90% - 100% \implies \text{Grade } \mathbf{O} \implies 10 \text{ points}$</li>
+<li>$80% - 89% \implies \text{Grade } \mathbf{A+} \implies 9 \text{ points}$</li>
+<li>$70% - 79% \implies \text{Grade } \mathbf{A} \implies 8 \text{ points}$</li>
+<li>$60% - 69% \implies \text{Grade } \mathbf{B+} \implies 7 \text{ points}$</li>
+<li>$50% - 59% \implies \text{Grade } \mathbf{B} \implies 6 \text{ points}$</li>
+<li>$45% - 49% \implies \text{Grade } \mathbf{C} \implies 5 \text{ points}$</li>
+<li>$40% - 44% \implies \text{Grade } \mathbf{P} \implies 4 \text{ points}$</li>
+<li>$&lt; 40% \implies \text{Grade } \mathbf{F} \implies 0 \text{ points}$</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3><strong>5.4 Working of the System</strong></h3>
+<ol>
+<li><strong>User Login &amp; Profile Loading:</strong> The student accesses the platform. Firebase Authentication validates credentials and loads the student&#39;s branch, semester, and daily study goal.</li>
+<li><strong>Lecture Telemetry Capture:</strong> When the student opens a study lecture on YouTube, <code>content.js</code> identifies the video and starts accumulating genuine watch seconds.</li>
+<li><strong>Timestamp Bookmarking:</strong> At any difficult point in the video, the student opens the extension popup and clicks &quot;Bookmark Timestamp&quot;. The video title, category, and exact playback second (<code>currentTime</code>) are saved.</li>
+<li><strong>Cloud Synchronization:</strong> Upon opening or switching to the web dashboard, the reactive <code>bridge.js</code> communicates the local watch records to <code>sync.js</code>, which executes batch updates to Cloud Firestore.</li>
+<li><strong>Roadmap Checkoff:</strong> As lectures reach 90% or the student marks topics manually, syllabus progress bars advance across subjects and the overall domain.</li>
+<li><strong>Formative Assessment:</strong> In Practice Tests, Mode A generates tests for chosen subjects, while Mode B auto-detects all topics completed by the student and asks Gemini to generate diagnostic questions covering those specific concepts.</li>
+<li><strong>Academic Forecasting:</strong> In SGPA Estimator, Mode A calculates official semester SGPA, while Mode B evaluates syllabus coverage and test scores to produce readiness ratings and high-priority revision suggestions.</li>
+</ol>
+<hr>
+<div class="page-break"></div>
+<h1><strong>CHAPTER 6</strong></h1>
+<h1><strong>TESTING AND RESULTS</strong></h1>
+<hr>
+<h3><strong>6.1 Testing Strategy</strong></h3>
+<p>The testing procedure validated system accuracy, UI responsiveness, security, and edge-case handling across multiple modules:</p>
+<ul>
+<li><strong>Unit &amp; Functional Testing:</strong> Tested individual JavaScript functions including <code>formatDuration()</code>, <code>calcPercent()</code>, <code>extractVideoId()</code>, and option index parsing.</li>
+<li><strong>Integration Testing:</strong> Verified message passing from <code>content.js</code> &rarr; <code>background.js</code> &rarr; <code>bridge.js</code> &rarr; <code>sync.js</code> &rarr; Cloud Firestore.</li>
+<li><strong>Edge-Case &amp; Anti-Cheat Testing:</strong> Verified that fast-forwarding, seeking, and playing in muted background tabs did not fraudulently manipulate study statistics.</li>
+<li><strong>API Resilience Testing:</strong> Tested Gemini AI test generation with valid keys, invalid keys, rate-limited keys, and missing keys to ensure graceful fallback.</li>
+<li><strong>Cross-Browser Compatibility:</strong> Validated layout and extension performance across Google Chrome, Microsoft Edge, and Brave Browser.</li>
+</ul>
+<hr>
+<h3><strong>6.2 Test Cases Table</strong></h3>
+<p><em>Table 6.1: Comprehensive Test Execution and Verification Matrix</em></p>
+<table>
+<thead>
+<tr>
+<th>Test Case ID</th>
+<th>Module / Feature</th>
+<th>Test Description</th>
+<th>Input Data</th>
+<th>Expected Output</th>
+<th>Actual Result</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>TC-01</strong></td>
+<td>Authentication</td>
+<td>User Signup with valid credentials</td>
+<td>Name, Email, Password (≥ 6 chars)</td>
+<td>Profile created in Firebase; redirected to Dashboard</td>
+<td>Account created; seamless dashboard redirect</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td><strong>TC-02</strong></td>
+<td>Authentication</td>
+<td>User Login with invalid password</td>
+<td>Registered email, incorrect password</td>
+<td>Error message displayed; access blocked</td>
+<td>&quot;Incorrect password&quot; notification displayed</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td><strong>TC-03</strong></td>
+<td>Video Tracking</td>
+<td>Real-time YouTube playback detection</td>
+<td>Active YouTube lecture URL</td>
+<td>Video title, duration, and seconds tracked in popup</td>
+<td>Video detected; duration and seconds displayed</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td><strong>TC-04</strong></td>
+<td>Telemetry Filter</td>
+<td>Fast-forward seek detection</td>
+<td>Video scrubbed forward by 3 minutes</td>
+<td>Skipped time delta ignored; only elapsed seconds counted</td>
+<td>Jump ignored; watchtime records true elapsed time</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td><strong>TC-05</strong></td>
+<td>Completion Logic</td>
+<td>90% watch completion threshold</td>
+<td>Video watched past 90% mark</td>
+<td><code>completed</code> flag set to <code>true</code>; progress bar turns green</td>
+<td>Marked completed; subject progress updated</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td><strong>TC-06</strong></td>
+<td>Bookmarking</td>
+<td>Video timestamp capture</td>
+<td>Video at timestamp 14:25</td>
+<td>Bookmark stored with <code>currentTime: 865</code></td>
+<td>Bookmark badge shows <code>⏱ 14:25</code>; links to <code>&amp;t=865s</code></td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td><strong>TC-07</strong></td>
+<td>Direct Seek</td>
+<td>Watch bookmark in YouTube</td>
+<td>Click &quot;Watch (14:25) ↗&quot; button</td>
+<td>YouTube opens directly at specified timestamp</td>
+<td>YouTube video opens and resumes playback at 14:25</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td><strong>TC-08</strong></td>
+<td>In-Place Roadmap</td>
+<td>Add custom topic to syllabus</td>
+<td>Topic title &amp; notes resource URL</td>
+<td>Topic added to unit; percentage recalculated</td>
+<td>Topic appears immediately and persists on reload</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td><strong>TC-09</strong></td>
+<td>AI Practice Test</td>
+<td>Mode A Custom Test Generation</td>
+<td>Data Structures, Unit 2, 10 Questions</td>
+<td>10 MCQs rendered with 4 options each</td>
+<td>10 questions rendered with explanations</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td><strong>TC-10</strong></td>
+<td>AI Practice Test</td>
+<td>Mode B Progress-Based Test</td>
+<td>3 Completed topics in active domain</td>
+<td>Questions generated strictly covering studied topics</td>
+<td>Generated questions match verified completed topics</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td><strong>TC-11</strong></td>
+<td>Fallback Cascade</td>
+<td>AI generation without API Key</td>
+<td>No API Key set in Settings</td>
+<td>System defaults to offline basic concept question bank</td>
+<td>Offline concept questions generated instantly</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td><strong>TC-12</strong></td>
+<td>SGPA Calculator</td>
+<td>Mode A Official AKTU Calculation</td>
+<td>Marks: DS=85 (4 cr), OOP=75 (4 cr)</td>
+<td>Credit-weighted SGPA calculated accurately (8.50)</td>
+<td>SGPA formula table matches official calculation</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td><strong>TC-13</strong></td>
+<td>Cloud Security</td>
+<td>Access document of another UID</td>
+<td>Authenticated user query for different UID</td>
+<td>Firestore Security Rules reject read/write</td>
+<td>Request denied by Firestore Security Rules</td>
+<td><strong>PASS</strong></td>
+</tr>
+<tr>
+<td><strong>TC-14</strong></td>
+<td>Multi-Domain</td>
+<td>Switch active domain from AKTU to DSA</td>
+<td>Switch domain tab in header</td>
+<td>Roadmap, progress, and tasks switch cleanly</td>
+<td>Complete domain isolation with zero data leakage</td>
+<td><strong>PASS</strong></td>
+</tr>
+</tbody></table>
+<hr>
+<h3><strong>6.3 Result Analysis</strong></h3>
+<p>All 14 comprehensive test cases passed successfully without system instability or data corruption:</p>
+<ul>
+<li>The telemetry anti-cheat filter eliminated 100% of fraudulent watchtime jumps.</li>
+<li>The dual-bridge extension communication layer achieved a 100% sync reliability rate on localhost and Vercel cloud deployments.</li>
+<li>The Gemini fallback cascade reliably delivered tests under standard operating limits and transferred smoothly to the offline bank when network calls were interrupted.</li>
+<li>Testing confirmed that <strong>StudyPilot AI</strong> provides a fast, robust, and intuitive user experience capable of meeting academic requirements.</li>
+</ul>
+<hr>
+<div class="page-break"></div>
+<h1><strong>CHAPTER 7</strong></h1>
+<h1><strong>CONCLUSION</strong></h1>
+<hr>
+<h3><strong>7.1 Conclusion</strong></h3>
+<p>The <strong>StudyPilot AI</strong> project successfully demonstrates a state-of-the-art, student-centric productivity platform engineered for technical university curricula. By combining an event-driven <strong>Manifest V3 Chrome Extension</strong> with a modern, responsive web application, the system solves the longstanding challenge of unstructured and unaccountable online video learning. </p>
+<p>The platform effectively eliminates passive study habits through real-time telemetry tracking and seek filtering, provides structured curriculum roadmaps with in-place editing capabilities, validates comprehension through generative AI practice tests, and offers transparent academic forecasting through official AKTU SGPA modeling. The zero-cost, cloud-hosted architecture proves that advanced educational technologies can be deployed cleanly without expensive enterprise subscriptions or heavyweight frameworks.</p>
+<hr>
+<h3><strong>7.2 Future Scope</strong></h3>
+<p>The modular architecture of StudyPilot AI provides a strong foundation for future research and feature enhancements:</p>
+<ol>
+<li><strong>Automated Video Summarization:</strong> Integrating speech-to-text models to generate automated markdown revision notes directly from YouTube video transcripts.</li>
+<li><strong>Teacher &amp; Mentor Portals:</strong> Developing administrative dashboards where college professors can view verified student study time and monitor cohort syllabus progress.</li>
+<li><strong>Cross-Browser Extension Store Distribution:</strong> Publishing the extension package to the official Chrome Web Store, Mozilla Add-ons, and Microsoft Edge Add-ons directories.</li>
+<li><strong>Offline Mobile Application:</strong> Packaging the web platform into an offline-first Progressive Web App (PWA) or native Flutter application with local SQLite caching.</li>
+<li><strong>Algorithmic Study Schedule Optimizer:</strong> Utilizing machine learning to suggest optimal daily study timetables based on remaining days until university examinations and historical topic test scores.</li>
+</ol>
+<hr>
+<div class="page-break"></div>
+<h1><strong>ANNEXURE</strong></h1>
+<hr>
+<h2><strong>Annexure - A: Source Code Snippets</strong></h2>
+<h3><strong>A.1 Telemetry Anti-Cheat Tracker (<code>extension/content.js</code>)</strong></h3>
+<pre><code class="language-javascript">// Check playback progress every 2.5 seconds and filter scrubbing jumps
+function collectMetadata(delta = 0) {
+  const video = document.querySelector(&#39;video&#39;);
+  if (!video) return null;
+
+  const duration    = Math.floor(video.duration || 0);
+  const currentTime = Math.floor(video.currentTime || 0);
+
+  // Anti-cheat seek filter: ignore deltas exceeding 20 seconds
+  if (lastTrackedTime !== null) {
+    const rawDelta = currentTime - lastTrackedTime;
+    if (rawDelta &gt; 0 &amp;&amp; rawDelta &lt;= 20) {
+      watchedSeconds += rawDelta;
+    }
+  }
+  lastTrackedTime = currentTime;
+
+  // 90% completion evaluation
+  const completed = duration &gt; 0 &amp;&amp; (currentTime / duration) &gt;= COMPLETION_THRESHOLD;
+
+  return {
+    videoId,
+    title: document.title.replace(&#39; - YouTube&#39;, &#39;&#39;).trim(),
+    duration,
+    currentTime,
+    watchedSeconds: Math.floor(watchedSeconds),
+    completed,
+    url: window.location.href,
+    domainId: currentDomainId,
+    lastWatched: Date.now()
+  };
+}
+</code></pre>
+<hr>
+<h3><strong>A.2 Extension-to-Web Bridge Protocol (<code>extension/bridge.js</code>)</strong></h3>
+<pre><code class="language-javascript">// Reactive storage listener pushing real-time events to web dashboard
+if (chrome?.storage?.onChanged) {
+  chrome.storage.onChanged.addListener((changes, areaName) =&gt; {
+    if (areaName === &#39;local&#39; &amp;&amp; (changes.videos || changes.bookmarks)) {
+      chrome.storage.local.get([&#39;videos&#39;, &#39;bookmarks&#39;, &#39;activeDomain&#39;], (result) =&gt; {
+        window.postMessage({
+          type: &#39;STUDYPILOT_STORAGE_CHANGED&#39;,
+          payload: {
+            ok: true,
+            extensionId: chrome.runtime?.id || &#39;&#39;,
+            videos: result?.videos || {},
+            bookmarks: result?.bookmarks || {},
+            activeDomain: result?.activeDomain || &#39;aktu&#39;
+          }
+        }, &#39;*&#39;);
+      });
+    }
+  });
+}
+</code></pre>
+<hr>
+<h3><strong>A.3 Gemini Multi-Model AI Test Cascade (<code>website/js/tests.js</code>)</strong></h3>
+<pre><code class="language-javascript">// Cascade through Gemini endpoints to ensure reliable MCQ generation
+const GEMINI_MODELS = [&#39;gemini-1.5-flash&#39;, &#39;gemini-2.0-flash&#39;, &#39;gemini-1.5-pro&#39;];
+
+for (const model of GEMINI_MODELS) {
+  try {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const response = await fetch(endpoint, {
+      method: &#39;POST&#39;,
+      headers: { &#39;Content-Type&#39;: &#39;application/json&#39; },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      const cleanJson = rawText.replace(/```json/g, &#39;&#39;).replace(/```/g, &#39;&#39;).trim();
+      return JSON.parse(cleanJson);
+    }
+  } catch (err) {
+    console.warn(`Model ${model} failed, attempting next in cascade:`, err);
+  }
+}
+// Fallback to deterministic offline concept questions if API unavailable
+return generateOfflineFallback(subjectName, topicNames, numQ);
+</code></pre>
+<hr>
+<h3><strong>A.4 AKTU Credit-Weighted SGPA Formula (<code>website/js/sgpa.js</code>)</strong></h3>
+<pre><code class="language-javascript">// Official AKTU Credit-Weighted SGPA Engine
+export function calculateSGPA(subjectRecords) {
+  let totalCredits = 0;
+  let totalWeightedPoints = 0;
+
+  subjectRecords.forEach(sub =&gt; {
+    const marks = parseFloat(sub.marks) || 0;
+    const credits = parseFloat(sub.credits) || 0;
+
+    // AKTU grade point classification
+    let gradePoint = 0;
+    if (marks &gt;= 90) gradePoint = 10;
+    else if (marks &gt;= 80) gradePoint = 9;
+    else if (marks &gt;= 70) gradePoint = 8;
+    else if (marks &gt;= 60) gradePoint = 7;
+    else if (marks &gt;= 50) gradePoint = 6;
+    else if (marks &gt;= 45) gradePoint = 5;
+    else if (marks &gt;= 40) gradePoint = 4;
+    else gradePoint = 0;
+
+    totalCredits += credits;
+    totalWeightedPoints += (credits * gradePoint);
+  });
+
+  return totalCredits &gt; 0 ? (totalWeightedPoints / totalCredits).toFixed(2) : &#39;0.00&#39;;
+}
+</code></pre>
+<hr>
+<div class="page-break"></div>
+<h2><strong>Annexure - B: Application Screenshots &amp; Output Results</strong></h2>
+<h3><strong>B.1 Landing Page &amp; Student Authentication</strong></h3>
+<p>The landing page introduces the platform, showcases core capabilities, and provides secure modal login and registration authenticated by Google Firebase.</p>
+<pre><code class="language-text">+-------------------------------------------------------------------------+
+| [Logo] StudyPilot AI     Features   How it works   [📥 Extension] [Sign in] |
++-------------------------------------------------------------------------+
+|                                                                         |
+|   Built for AKTU B.Tech Students                                        |
+|   YOUR INTELLIGENT STUDY CO-PILOT                                       |
+|                                                                         |
+|   Track your YouTube learning, map videos to your AKTU syllabus,       |
+|   monitor daily progress, and generate AI practice tests.              |
+|                                                                         |
+|   [ Get started free ]    [ Add Extension (Free) ]                      |
+|                                                                         |
++-------------------------------------------------------------------------+
+       Figure B.1.1: Web Application Landing Page &amp; User Interface
+</code></pre>
+<hr>
+<h3><strong>B.2 StudyPilot Productivity Dashboard</strong></h3>
+<p>Displays the daily study goal progress bar, 7-day study time curve using Chart.js, active domain metrics, and quick-access syllabus progress across semester subjects.</p>
+<pre><code class="language-text">+-------------------------------------------------------------------------+
+| Dashboard | AKTU CSE | [📥 Get Extension] [● Extension Connected] [Sync] |
++-------------------------------------------------------------------------+
+| [🔥 3 Day Streak]  |  [⏱️ Today: 2h 15m]  |  [🗺️ Syllabus: 42%]  | [🎯 SGPA: 8.4]|
++-------------------------------------------------------------------------+
+| Weekly Study Activity (Chart.js)         | Subject-Wise Syllabus Covered|
+|   [============================== 74% ]  | - Data Structures (68%)      |
+|   Mon  Tue  Wed  Thu  Fri  Sat  Sun      | - Operating Systems (45%)    |
++-------------------------------------------------------------------------+
+       Figure B.2.1: StudyPilot Productivity Dashboard Overview
+</code></pre>
+<hr>
+<h3><strong>B.3 Interactive Syllabus Roadmap</strong></h3>
+<p>Features unit-level topic tracking with checkboxes, in-place editing, and attached video resources for seamless revision.</p>
+<pre><code class="language-text">+-------------------------------------------------------------------------+
+| Syllabus Roadmap — AKTU CSE (Semester 3)                 [+ Add Subject]|
++-------------------------------------------------------------------------+
+| ▼ Data Structures using C (Credits: 4)                     Progress: 60%|
+|   ▼ Unit 1 — Introduction &amp; Arrays                                      |
+|     [✓] T1: Introduction to Data Structures      [Watch Lecture ↗] [✏️] |
+|     [✓] T2: Abstract Data Types (ADT)             [Watch Lecture ↗] [✏️] |
+|     [ ] T3: Arrays: 1D and 2D                     [Watch Lecture ↗] [✏️] |
+|     [ ] T4: Sparse Matrix Operations              [Attach Video +]  [✏️] |
++-------------------------------------------------------------------------+
+       Figure B.3.1: Interactive Syllabus Roadmap with In-Place Editing
+</code></pre>
+<hr>
+<h3><strong>B.4 Dual-Mode Practice Tests</strong></h3>
+<p>Enables custom curriculum testing (Mode A) and progress-based diagnostic assessment (Mode B) with live score calculations and explanations.</p>
+<pre><code class="language-text">+-------------------------------------------------------------------------+
+| Practice Tests — AI Assessment Engine                                    |
+| [ Mode A: Custom Test ]            [ Mode B: Test Based on My Progress ]|
++-------------------------------------------------------------------------+
+| Subject: Data Structures | Unit: Unit 2 — Stacks &amp; Queues (6 topics)     |
+| Specific Topics: [Select All] [Clear] -&gt; (All 6 topics in scope)        |
+| [ Generate Custom Test ]                                                |
+|                                                                         |
+| Question 1 of 10                                            [Stack ADT] |
+| Which data structure is best suited for evaluating postfix expressions? |
+| (A) Queue   (B) Stack   (C) Binary Tree   (D) Graph                     |
+|                                                                         |
+| [ Submit Test ]                                                         |
++-------------------------------------------------------------------------+
+       Figure B.4.1: Practice Test Generator Interface &amp; Scoring Card
+</code></pre>
+<hr>
+<h3><strong>B.5 SGPA Estimator &amp; Readiness Predictor</strong></h3>
+<p>Computes credit-weighted SGPA using official AKTU formulas and estimates semester examination readiness based on syllabus progress and test accuracy.</p>
+<pre><code class="language-text">+-------------------------------------------------------------------------+
+| SGPA Estimator &amp; Exam Readiness Predictor                               |
+| [ Mode A: Official AKTU Calculator ]    [ Mode B: Progress Estimator ]  |
++-------------------------------------------------------------------------+
+| Subject Name           Credits   Expected %   Grade Point   Status      |
+| Data Structures           4          85           9 (A+)      ✓         |
+| Operating Systems         4          74           8 (A)       ✓         |
+| Discrete Mathematics      4          68           7 (B+)      ✓         |
+|                                                                         |
+| Cumulative Credits: 12   |  Predicted SGPA: 8.00                        |
++-------------------------------------------------------------------------+
+       Figure B.5.1: SGPA Estimator Calculation Breakdown &amp; Readiness
+</code></pre>
+<hr>
+<h3><strong>B.6 Chrome Extension YouTube Overlay &amp; Bookmarking</strong></h3>
+<p>Displays live lecture telemetry, domain selection, and one-click timestamp bookmarking directly on YouTube.</p>
+<pre><code class="language-text">+-----------------------------------+
+| 🎓 StudyPilot AI — Lecture Active |
++-----------------------------------+
+| Video: Graph Traversals (BFS/DFS) |
+| Channel: Gate Smashers            |
+| Duration: 24:18  | Watched: 14:25 |
+| [===================&gt;------] 59%  |
+|                                   |
+| Domain: [ AKTU Academic Tracker ] |
+| Subject: [ Data Structures      ] |
+| Category: [ Important Concept   ] |
+|                                   |
+| [ 📌 Bookmark Timestamp (14:25) ] |
+| [ 🔄 Sync with Web Dashboard    ] |
++-----------------------------------+
+    Figure B.6.1: Chrome Extension YouTube Popup Interface
+</code></pre>
+<hr>
+<div class="page-break"></div>
+<h1><strong>REFERENCES</strong></h1>
+<ol>
+<li><p><strong>Project GitHub Repository:</strong><br>StudyPilot AI — Complete Source Code, Documentation &amp; Deployment Assets. Available at:<br><a href="https://github.com/deepakpandey31/StudyPilot">https://github.com/deepakpandey31/StudyPilot</a></p>
+</li>
+<li><p><strong>Live Deployed Web Platform:</strong><br>StudyPilot AI Production Web Application on Vercel Edge Network. Available at:<br><a href="https://studypilot-website-nttc.vercel.app/">https://studypilot-website-nttc.vercel.app</a></p>
+</li>
+<li><p><strong>Google Chrome Extensions Documentation:</strong><br>Google Chrome Developers — <em>Manifest V3 Migration and Content Scripts Architecture</em>. Available at:<br><a href="https://developer.chrome.com/docs/extensions/mv3/">https://developer.chrome.com/docs/extensions/mv3/</a></p>
+</li>
+<li><p><strong>Google Firebase Documentation:</strong><br>Firebase Platform Documentation — <em>Firebase Authentication &amp; Cloud Firestore Security Rules</em>. Available at:<br><a href="https://firebase.google.com/docs">https://firebase.google.com/docs</a></p>
+</li>
+<li><p><strong>Google Generative AI Documentation:</strong><br>Google AI Studio — <em>Gemini API Reference and Structured JSON Output Parsing</em>. Available at:<br><a href="https://ai.google.dev/docs">https://ai.google.dev/docs</a></p>
+</li>
+<li><p><strong>Dr. A.P.J. Abdul Kalam Technical University (AKTU):</strong><br>Curriculum and Evaluation Scheme for B.Tech Computer Science &amp; Engineering (Semesters 1 to 8). Available at:<br><a href="https://aktu.ac.in/syllabus.html">https://aktu.ac.in/syllabus.html</a></p>
+</li>
+<li><p><strong>Mozilla Developer Network (MDN):</strong><br>JavaScript ES6 Modules, Custom Properties, and HTML5 <code>&lt;video&gt;</code> Telemetry APIs. Available at:<br><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript">https://developer.mozilla.org/en-US/docs/Web/JavaScript</a></p>
+</li>
+<li><p><strong>Chart.js Documentation:</strong><br>Simple yet flexible JavaScript charting for designers and developers. Available at:<br><a href="https://www.chartjs.org/docs/latest/">https://www.chartjs.org/docs/latest/</a></p>
+</li>
+<li><p><strong>Vercel Cloud Platform Documentation:</strong><br>Zero-Configuration Edge Deployment &amp; URL Rewrite Engine. Available at:<br><a href="https://vercel.com/docs">https://vercel.com/docs</a></p>
+</li>
+</ol>
+
+    </div>
+</body>
+</html>
