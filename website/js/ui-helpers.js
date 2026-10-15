@@ -213,6 +213,126 @@ function closeModal(modalId) {
 }
 window.closeModal = closeModal;
 
+// ─── INTERACTIVE EXTENSION SETUP MODAL (100% Free 30s Setup) ─
+function openExtensionSetupModal() {
+  let modal = document.getElementById('extension-setup-modal-overlay');
+  const isPagesDir = window.location.pathname.includes('/pages/');
+  const zipUrl = isPagesDir ? '../downloads/StudyPilot-Extension.zip' : 'downloads/StudyPilot-Extension.zip';
+
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'extension-setup-modal-overlay';
+    modal.className = 'domain-modal-overlay';
+    modal.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; display:flex; align-items:center; justify-content:center; padding:16px;';
+
+    modal.innerHTML = `
+      <div class="card domain-modal-card" style="max-width:520px; width:100%; padding:22px; position:relative; max-height:92vh; overflow-y:auto; background:var(--color-surface); border-radius:var(--radius-md); box-shadow:0 12px 36px rgba(0,0,0,0.2);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:24px;">🧩</span>
+            <div>
+              <div style="font-size:16px; font-weight:700; color:var(--color-text);">Add Chrome Extension</div>
+              <div style="font-size:12px; color:var(--color-text-muted);">100% Free • Works in 30 Seconds</div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="closeExtensionSetupModal()" style="font-size:18px; padding:2px 8px; line-height:1;">✕</button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <!-- Step 1 -->
+          <div style="background:var(--color-bg); border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:12px 14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+              <div>
+                <strong style="font-size:13px; color:var(--color-text);">Step 1: Download Extension</strong>
+                <div style="font-size:11px; color:var(--color-text-muted);">Pre-built package (17 KB)</div>
+              </div>
+              <a href="${zipUrl}" download class="btn btn-primary btn-sm" style="display:inline-flex; align-items:center; gap:6px; font-size:12px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download ZIP
+              </a>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div style="background:var(--color-bg); border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:12px 14px;">
+            <strong style="font-size:13px; color:var(--color-text);">Step 2: Unzip (Extract)</strong>
+            <div style="font-size:12px; color:var(--color-text-muted); margin-top:3px; line-height:1.5;">
+              In your <strong>Downloads</strong> folder &rarr; Right click <code>StudyPilot-Extension.zip</code> &rarr; Click <strong>"Extract All"</strong> (or Unzip).
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div style="background:var(--color-bg); border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:12px 14px;">
+            <strong style="font-size:13px; color:var(--color-text);">Step 3: Load into Google Chrome</strong>
+            <div style="margin-top:6px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+              <span style="font-size:12px; color:var(--color-text);">1. Open URL:</span>
+              <code style="background:#E2E8F0; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:600;">chrome://extensions</code>
+              <button type="button" class="btn btn-ghost btn-xs" id="copy-chrome-url-btn" onclick="copyChromeExtensionsUrl()" style="font-size:11px; padding:2px 6px;">Copy URL</button>
+            </div>
+            <div style="font-size:12px; color:var(--color-text); margin-top:6px; line-height:1.6;">
+              2. Turn <strong>ON</strong> <span style="background:#EFF6FF; color:#1D4ED8; padding:1px 5px; border-radius:3px; font-weight:600;">Developer mode</span> (top-right toggle).<br/>
+              3. Click <span style="background:#F1F5F9; padding:1px 5px; border-radius:3px; font-weight:600;">Load unpacked</span> (top-left) & select the unzipped <code>extension</code> folder!
+            </div>
+          </div>
+
+          <!-- Live Connection Test -->
+          <div id="ext-modal-status-box" style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:var(--radius-sm); padding:12px 14px; text-align:center;">
+            <div id="ext-modal-status-text" style="font-size:13px; font-weight:600; color:#166534; margin-bottom:6px;">
+              ${window.__studypilot_extension_connected ? '✓ Extension Connected & Active!' : 'Once loaded in Chrome, verify connection:'}
+            </div>
+            <button type="button" class="btn btn-primary btn-sm" onclick="testModalExtensionConnection()">
+              ⚡ Test Connection
+            </button>
+          </div>
+        </div>
+
+        <div style="margin-top:14px; text-align:center;">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="closeExtensionSetupModal()">Close</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+  modal.style.display = 'flex';
+}
+
+function closeExtensionSetupModal() {
+  const modal = document.getElementById('extension-setup-modal-overlay');
+  if (modal) modal.style.display = 'none';
+}
+window.openExtensionSetupModal = openExtensionSetupModal;
+window.closeExtensionSetupModal = closeExtensionSetupModal;
+
+function copyChromeExtensionsUrl() {
+  navigator.clipboard.writeText('chrome://extensions').then(() => {
+    const btn = document.getElementById('copy-chrome-url-btn');
+    if (btn) btn.textContent = '✓ Copied!';
+    showToast('Copied "chrome://extensions" — paste it into your browser address bar!', 'success');
+    setTimeout(() => {
+      if (btn) btn.textContent = 'Copy URL';
+    }, 2500);
+  });
+}
+window.copyChromeExtensionsUrl = copyChromeExtensionsUrl;
+
+function testModalExtensionConnection() {
+  window.postMessage({ type: 'STUDYPILOT_PING' }, '*');
+  const box = document.getElementById('ext-modal-status-box');
+  const txt = document.getElementById('ext-modal-status-text');
+
+  setTimeout(() => {
+    if (window.__studypilot_extension_connected) {
+      if (box) { box.style.background = '#DCFCE7'; box.style.borderColor = '#86EFAC'; }
+      if (txt) { txt.style.color = '#15803D'; txt.textContent = '🎉 Extension Connected Successfully!'; }
+      showToast('StudyPilot Extension detected & connected!', 'success');
+    } else {
+      if (txt) { txt.style.color = '#92400E'; txt.textContent = '⏳ Not detected yet. Make sure you turned Developer mode ON and loaded the folder in chrome://extensions.'; }
+      showToast('Extension not detected yet. Check chrome://extensions', 'warning');
+    }
+  }, 350);
+}
+window.testModalExtensionConnection = testModalExtensionConnection;
+
 // ES Module exports for compatibility when imported
 export {
   showToast,
@@ -222,6 +342,8 @@ export {
   setActive,
   setButtonLoading,
   debounce,
-  closeModal
+  closeModal,
+  openExtensionSetupModal,
+  closeExtensionSetupModal
 };
 

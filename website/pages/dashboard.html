@@ -106,11 +106,11 @@
           <p class="page-subtitle" id="greeting-text">Good morning!</p>
         </div>
         <div style="display:flex; align-items:center; gap:var(--sp-3); flex-wrap:wrap;">
-          <a href="../downloads/StudyPilot-Extension.zip" download class="btn btn-primary btn-xs" style="font-size:11px; padding:4px 8px; text-decoration:none; display:inline-flex; align-items:center; gap:4px;" title="Download Chrome Extension ZIP">
+          <button type="button" onclick="openExtensionSetupModal()" class="btn btn-primary btn-xs" style="font-size:11px; padding:4px 8px; display:inline-flex; align-items:center; gap:4px;" title="Setup Chrome Extension">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Get Extension
-          </a>
-          <span id="ext-conn-badge" class="badge badge-yellow" style="font-size:11px; padding:3px 8px;" title="Checking connection to StudyPilot extension…">Extension Checking…</span>
+          </button>
+          <span id="ext-conn-badge" class="badge badge-yellow" onclick="openExtensionSetupModal()" style="font-size:11px; padding:3px 8px; cursor:pointer;" title="Click to view extension connection status & guide">Extension Checking…</span>
           <button id="manual-sync-btn" class="btn btn-ghost btn-sm" onclick="handleManualSync()" title="Sync watched YouTube videos from StudyPilot extension">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-right:4px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
             <span id="manual-sync-btn-text">Sync</span>
