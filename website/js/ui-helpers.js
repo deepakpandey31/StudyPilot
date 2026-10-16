@@ -351,5 +351,15 @@ window.closeExtensionSetupModal = closeExtensionSetupModal;
 window.copyChromeExtensionsUrl = copyChromeExtensionsUrl;
 window.testModalExtensionConnection = testModalExtensionConnection;
 
+function setButtonLoading(btn, isLoading) {
+  if (!btn) return;
+  const text    = btn.querySelector('.btn-text');
+  const spinner = btn.querySelector('.btn-spinner');
+  btn.disabled  = !!isLoading;
+  if (text)    text.classList.toggle('hidden', !!isLoading);
+  if (spinner) spinner.classList.toggle('hidden', !isLoading);
+}
+window.setButtonLoading = setButtonLoading;
+
 
 

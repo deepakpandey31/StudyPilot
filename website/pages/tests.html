@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../css/style.css" />
   <link rel="stylesheet" href="../css/dashboard.css" />
+  <script src="../js/ui-helpers.js?v=20261016_v4"></script>
   <style>
     /* ── AI KEY NOTE ────────────────────────────────────── */
     .ai-setup-notice {
@@ -18,6 +19,16 @@
       margin-bottom: var(--sp-5);
       font-size: var(--font-size-sm);
     }
+    .ai-badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-left: 8px;
+    }
 
     /* ── TEST GENERATOR FORM ────────────────────────────── */
     .test-gen-form {
@@ -27,6 +38,17 @@
       padding: var(--sp-6);
       margin-bottom: var(--sp-5);
     }
+    .form-grid-responsive {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--sp-4);
+      margin-bottom: var(--sp-4);
+    }
+    @media (max-width: 640px) {
+      .form-grid-responsive {
+        grid-template-columns: 1fr;
+      }
+    }
 
     /* ── MCQ QUESTION CARD ──────────────────────────────── */
     .question-card {
@@ -35,6 +57,7 @@
       border-radius: var(--radius-md);
       padding: var(--sp-5);
       margin-bottom: var(--sp-4);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
     }
     .question-num {
       font-size: 11px;
@@ -71,6 +94,8 @@
     .option-btn.selected { border-color: var(--color-primary); background: var(--color-primary-lt); color: var(--color-primary); }
     .option-btn.correct  { border-color: var(--color-success); background: #DCFCE7; color: var(--color-success); }
     .option-btn.wrong    { border-color: var(--color-danger);  background: #FEE2E2; color: var(--color-danger); }
+    .option-btn:disabled { cursor: default; }
+    .option-btn:disabled:hover { background: inherit; border-color: inherit; }
 
     .option-letter {
       width: 24px;
@@ -83,7 +108,11 @@
       font-size: 11px;
       font-weight: 700;
       flex-shrink: 0;
+      transition: background 0.2s, color 0.2s;
     }
+    .option-btn.selected .option-letter { background: var(--color-primary); color: #fff; }
+    .option-btn.correct  .option-letter { background: var(--color-success); color: #fff; }
+    .option-btn.wrong    .option-letter { background: var(--color-danger);  color: #fff; }
 
     .explanation-box {
       display: none;
@@ -94,8 +123,9 @@
       border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
       font-size: var(--font-size-sm);
       color: #166534;
+      line-height: 1.5;
     }
-    .explanation-box.visible { display: block; }
+    .explanation-box.visible { display: block; animation: fadeIn 0.3s ease; }
 
     /* ── SCORE CARD ─────────────────────────────────────── */
     .score-card {
@@ -106,8 +136,9 @@
       padding: var(--sp-8);
       text-align: center;
       margin-bottom: var(--sp-5);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }
-    .score-card.visible { display: block; }
+    .score-card.visible { display: block; animation: fadeIn 0.4s ease; }
     .score-big {
       font-size: 48px;
       font-weight: 800;
@@ -214,7 +245,22 @@
         <div class="card-title" style="margin-bottom:var(--sp-2);">Mode A: Custom Practice Test</div>
         <p class="text-muted text-xs mb-4">Choose any subject, unit, or specific topics from the active domain to test your comprehension.</p>
         
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-4); margin-bottom:var(--sp-4);">
+        <!-- Semester Selector for AKTU Domain -->
+        <div class="form-group mb-3" id="test-semester-container" style="display:none;">
+          <label for="test-semester">AKTU Semester</label>
+          <select id="test-semester" onchange="changeTestSemester(this.value)">
+            <option value="1">Semester 1</option>
+            <option value="2">Semester 2</option>
+            <option value="3" selected>Semester 3</option>
+            <option value="4">Semester 4</option>
+            <option value="5">Semester 5</option>
+            <option value="6">Semester 6</option>
+            <option value="7">Semester 7</option>
+            <option value="8">Semester 8</option>
+          </select>
+        </div>
+
+        <div class="form-grid-responsive">
           <div class="form-group" style="margin-bottom:0;">
             <label for="test-subject">Subject / Module</label>
             <select id="test-subject" onchange="updateTopicList()">
@@ -306,7 +352,10 @@
         <div class="text-muted text-sm" style="margin-bottom:4px;">Your Score</div>
         <div class="score-big" id="score-display">—</div>
         <div id="score-message" style="margin:10px 0; font-weight:500;"></div>
-        <button class="btn btn-primary" onclick="resetTest()" style="margin-top:var(--sp-4);">Try another test</button>
+        <div style="display:flex; justify-content:center; gap:10px; margin-top:var(--sp-4);">
+          <button class="btn btn-primary" onclick="resetTest()">Try another test</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('questions-area')?.scrollIntoView({ behavior: 'smooth' })">Review Answers</button>
+        </div>
       </div>
 
       <!-- Questions area -->
@@ -319,9 +368,12 @@
         </button>
       </div>
 
-      <!-- Test history -->
+      <!-- Previous Tests history -->
       <div class="card" style="margin-top:var(--sp-5);">
-        <div class="card-title">Previous Tests</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--sp-2);">
+          <div class="card-title" style="margin:0;">Previous Tests</div>
+          <button type="button" class="btn btn-ghost btn-xs" id="clear-tests-btn" onclick="clearTestHistory()" style="display:none; color:var(--color-danger); font-size:11px;">Clear History</button>
+        </div>
         <div id="test-history-list">
           <div class="empty-state">
             <p class="text-muted text-sm">No tests taken yet. Generate your first test above.</p>
@@ -334,6 +386,6 @@
 
 <div id="toast-container"></div>
 <script src="../js/ui-helpers.js"></script>
-<script type="module" src="../js/tests.js?v=20261016_v3"></script>
+<script type="module" src="../js/tests.js?v=20261016_v4"></script>
 </body>
 </html>

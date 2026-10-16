@@ -3,12 +3,14 @@
 
    Supports:
    - Domain isolation (AKTU, DSA, Web Dev, Custom)
-   - Mode A: Custom Test by Subject, Unit, & Specific Topics
-   - Mode B: Test based strictly on Student's Completed/In-Progress Topics
-   - Multi-model Gemini fallback cascade (1.5-flash -> 2.0-flash -> 1.5-flash-latest -> 1.5-pro)
-   - Offline fallback concept questions when no API key is set
+   - Mode A: Custom Practice Test by Subject, Unit, & Specific Topics (with Semester switcher for AKTU)
+   - Mode B: Progress-Based Test strictly covering completed syllabus topics + diagnostic mode
+   - Multi-model Gemini fallback cascade (1.5-flash -> 2.0-flash -> 2.5-flash -> 1.5-flash-latest -> 1.5-pro)
+   - Resilient AI response parsing with automatic offline fallback when key is missing or quota exceeded
+   - Curated high-yield computer science question bank + dynamic procedural generator with randomized answers
    - Option index normalization (0-3 & A-D)
-   - In-memory test history sorting to avoid composite index crashes
+   - Offline-first local test history persistence (0ms delay) + Firestore cloud synchronization
+   - Clear test history support & dynamic Gemini API status badge
    ============================================================ */
 
 import { auth, db } from './firebase-config.js';
@@ -17,12 +19,13 @@ import {
   collection, addDoc, getDocs, query, where,
   serverTimestamp, doc, getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { SYLLABUS, getDomainRoadmap, getAllDomainTopics } from './syllabus-data.js?v=20261016_v3';
-import { DomainManager } from './domain-manager.js?v=20261016_v3';
+import { SYLLABUS, getDomainRoadmap, getAllDomainTopics } from './syllabus-data.js?v=20261016_v4';
+import { DomainManager } from './domain-manager.js?v=20261016_v4';
 
 const GEMINI_MODELS = [
   'gemini-1.5-flash',
   'gemini-2.0-flash',
+  'gemini-2.5-flash',
   'gemini-1.5-flash-latest',
   'gemini-1.5-pro'
 ];
@@ -40,6 +43,58 @@ let testSubject      = '';
 let testUnit         = '';
 let testTopicsList   = [];
 
+// ─── UTILITY HELPERS ──────────────────────────────────────────
+function setButtonLoading(btn, isLoading) {
+  if (!btn) return;
+  const text    = btn.querySelector('.btn-text');
+  const spinner = btn.querySelector('.btn-spinner');
+  btn.disabled  = !!isLoading;
+  if (text)    text.classList.toggle('hidden', !!isLoading);
+  if (spinner) spinner.classList.toggle('hidden', !isLoading);
+}
+window.setButtonLoading = setButtonLoading;
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function updateApiKeyNotice() {
+  const notice = document.getElementById('ai-notice');
+  if (!notice) return;
+  const key = localStorage.getItem('gemini_api_key') || '';
+  if (key) {
+    notice.style.background = '#ECFDF5';
+    notice.style.borderColor = '#A7F3D0';
+    notice.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div>
+          <strong style="color:#065F46;">✅ Gemini AI Connected:</strong>
+          <span style="color:#047857;">AI-powered practice tests are fully active using your personal Gemini API key.</span>
+        </div>
+        <a href="settings.html" class="btn btn-ghost btn-xs" style="font-size:11px; padding:2px 8px;">Manage Key</a>
+      </div>
+    `;
+  } else {
+    notice.style.background = 'var(--color-primary-lt)';
+    notice.style.borderColor = '#BFDBFE';
+    notice.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div>
+          <strong>🔑 Gemini API Integration:</strong> AI questions are generated using your personal Gemini API key.
+          Enter it in <a href="settings.html" style="font-weight:600; text-decoration:underline;">Settings</a>.
+          <span class="text-muted text-xs" style="display:block; margin-top:2px;">Without a key, the generator runs in curated offline concept mode.</span>
+        </div>
+        <span class="badge badge-blue" style="font-size:10px;">Offline Mode Active</span>
+      </div>
+    `;
+  }
+}
+
 // ─── INSTANT ZERO-DELAY BOOTSTRAP (0ms Render) ────────────────
 try {
   const cachedName = localStorage.getItem('studypilot_user_name') || 'Student';
@@ -51,8 +106,16 @@ try {
   DomainManager.renderDomainTabs();
 } catch (e) {}
 
-// Synchronously render dropdowns, topics & cached test history
+// Listen to domain switches anywhere in the app
+window.addEventListener('studypilot-domain-changed', (e) => {
+  if (e.detail?.domainId && e.detail.domainId !== currentDomainId) {
+    onDomainChanged(e.detail.domainId);
+  }
+});
+
+// Synchronously render dropdowns, topics, notice & cached test history
 initTestsPageInstantly();
+updateApiKeyNotice();
 
 // ─── AUTH & BACKGROUND CLOUD SYNC ─────────────────────────────
 onAuthStateChanged(auth, async (user) => {
@@ -60,11 +123,9 @@ onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     renderUserInfo(user);
 
-    // Initialize domain manager
+    // Initialize domain manager with user context
     try {
       await DomainManager.init('domain-selector-container', (domainId) => {
-        currentDomainId = domainId;
-        localStorage.setItem('studypilot_active_domain', domainId);
         onDomainChanged(domainId);
       });
     } catch (e) {}
@@ -76,12 +137,17 @@ onAuthStateChanged(auth, async (user) => {
       const profileRef = doc(db, 'users', user.uid);
       const snap       = await getDoc(profileRef);
       if (snap.exists() && snap.data().semester) {
-        currentSemester = parseInt(snap.data().semester, 10);
-        localStorage.setItem('studypilot_current_semester', String(currentSemester));
+        const sem = parseInt(snap.data().semester, 10);
+        if (sem && sem !== currentSemester) {
+          currentSemester = sem;
+          localStorage.setItem('studypilot_current_semester', String(currentSemester));
+          initTestsPageInstantly();
+        }
       }
     } catch (e) {}
 
-    // Cloud sync in background
+    // Cloud sync progress and test history in background
+    syncProgressFromCloud();
     syncTestHistoryFromCloud();
 
   } else {
@@ -96,11 +162,29 @@ onAuthStateChanged(auth, async (user) => {
 function onDomainChanged(domainId) {
   currentDomainId = domainId;
   localStorage.setItem('studypilot_active_domain', domainId);
+
+  // Reset active test state if domain changed
+  if (currentQuestions.length > 0) {
+    resetTest();
+  }
+
   initTestsPageInstantly();
+
   if (currentUser) {
+    syncProgressFromCloud();
     syncTestHistoryFromCloud();
   }
 }
+
+// ─── CHANGE AKTU SEMESTER ─────────────────────────────────────
+window.changeTestSemester = function(semValue) {
+  currentSemester = parseInt(semValue, 10) || 3;
+  localStorage.setItem('studypilot_current_semester', String(currentSemester));
+  initTestsPageInstantly();
+  if (currentUser) {
+    syncProgressFromCloud();
+  }
+};
 
 // ─── INSTANT PAGE INITIALIZATION (0ms) ────────────────────────
 function initTestsPageInstantly() {
@@ -110,7 +194,19 @@ function initTestsPageInstantly() {
     subEl.textContent = `Practice tests for ${domain.name || 'this domain'} — custom selection or tailored to your progress`;
   }
 
-  // 1. Load roadmap
+  // Handle AKTU Semester Selector visibility
+  const semContainer = document.getElementById('test-semester-container');
+  const semSelect    = document.getElementById('test-semester');
+  if (semContainer) {
+    if (currentDomainId === 'aktu') {
+      semContainer.style.display = 'block';
+      if (semSelect) semSelect.value = String(currentSemester);
+    } else {
+      semContainer.style.display = 'none';
+    }
+  }
+
+  // 1. Load active roadmap
   const customKey = currentDomainId === 'aktu' ? `aktu_sem_${currentSemester}` : currentDomainId;
   let loadedRm = null;
   try {
@@ -123,20 +219,8 @@ function initTestsPageInstantly() {
   }
   domainRoadmap = loadedRm;
 
-  // 2. Load progress
-  try {
-    let cachedProg = localStorage.getItem(`studypilot_roadmap_progress_progress_${currentDomainId}`);
-    if (!cachedProg) {
-      cachedProg = localStorage.getItem(`studypilot_roadmap_progress_${currentDomainId}`);
-    }
-    if (!cachedProg && currentDomainId === 'aktu') {
-      cachedProg = localStorage.getItem('studypilot_roadmap_progress_progress');
-    }
-    if (cachedProg) completedTopics = JSON.parse(cachedProg);
-    else completedTopics = {};
-  } catch (e) {
-    completedTopics = {};
-  }
+  // 2. Load cached progress
+  loadCompletedTopicsLocal();
 
   // Attach DOM listeners if not already present
   const subSelect = document.getElementById('test-subject');
@@ -153,6 +237,53 @@ function initTestsPageInstantly() {
   populateSubjectDropdown();
   populateModeBTopics();
   renderCachedTestHistory();
+  updateApiKeyNotice();
+}
+
+// ─── LOAD PROGRESS FROM LOCALSTORAGE ──────────────────────────
+function loadCompletedTopicsLocal() {
+  try {
+    let cachedProg = localStorage.getItem(`studypilot_roadmap_progress_progress_${currentDomainId}`);
+    if (!cachedProg) {
+      cachedProg = localStorage.getItem(`studypilot_roadmap_progress_${currentDomainId}`);
+    }
+    if (!cachedProg && currentDomainId === 'aktu') {
+      cachedProg = localStorage.getItem('studypilot_roadmap_progress_progress');
+    }
+    if (cachedProg) {
+      completedTopics = JSON.parse(cachedProg);
+    } else {
+      completedTopics = {};
+    }
+  } catch (e) {
+    completedTopics = {};
+  }
+}
+
+// ─── SYNC PROGRESS FROM CLOUD (Background) ────────────────────
+async function syncProgressFromCloud() {
+  if (!currentUser || !db) return;
+  try {
+    const progressKey = `progress_${currentDomainId}`;
+    const progressRef = doc(db, 'users', currentUser.uid, 'roadmap', progressKey);
+    const snap = await getDoc(progressRef);
+    if (snap.exists() && snap.data().completedTopics) {
+      completedTopics = { ...completedTopics, ...snap.data().completedTopics };
+      try {
+        localStorage.setItem(`studypilot_roadmap_progress_${progressKey}`, JSON.stringify(completedTopics));
+      } catch (e) {}
+      populateModeBTopics();
+    } else if (currentDomainId === 'aktu') {
+      const legacyRef = doc(db, 'users', currentUser.uid, 'roadmap', 'progress');
+      const legSnap = await getDoc(legacyRef);
+      if (legSnap.exists() && legSnap.data().completedTopics) {
+        completedTopics = { ...completedTopics, ...legSnap.data().completedTopics };
+        populateModeBTopics();
+      }
+    }
+  } catch (e) {
+    console.warn('Progress cloud sync note:', e);
+  }
 }
 
 // ─── MODE SWITCHER ────────────────────────────────────────────
@@ -189,10 +320,15 @@ function populateSubjectDropdown() {
     return;
   }
 
+  const prevVal = sel.value;
   sel.innerHTML = domainRoadmap.map(s => {
     const val = s.code || s.id || s.name;
     return `<option value="${escapeHtml(val)}">${escapeHtml(s.name)}</option>`;
   }).join('');
+
+  if (prevVal && domainRoadmap.some(s => (s.code || s.id || s.name) === prevVal)) {
+    sel.value = prevVal;
+  }
 
   updateTopicList();
 }
@@ -254,7 +390,7 @@ function updateTopicCheckboxes() {
     return;
   }
 
-  container.innerHTML = topics.map((t, idx) => `
+  container.innerHTML = topics.map((t) => `
     <label style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:2px 0;">
       <input type="checkbox" class="mode-a-topic-check" value="${escapeHtml(t.name)}" style="accent-color:var(--color-primary);" />
       <span style="font-size:13px; color:var(--color-text);">${escapeHtml(t.name)}</span>
@@ -301,18 +437,22 @@ function populateModeBTopics() {
 
   if (badge) badge.textContent = domain.name;
 
-  // Find all topics where completedTopics[key] === true
+  // Find all covered topics
   const covered = [];
   domainRoadmap.forEach(sub => {
+    const subCode = sub.code || sub.id || 'SUB';
     (sub.units || []).forEach(unit => {
+      const uId = unit.id || unit.name || 'U';
       (unit.topics || []).forEach(topic => {
-        const key = `${sub.code}_${unit.id}_${topic.id}`;
-        if (completedTopics[key]) {
+        const tId = topic.id || topic.name || 'T';
+        const key = `${subCode}_${uId}_${tId}`;
+        const altKey = `${sub.code}_${unit.id}_${topic.id}`;
+        if (completedTopics[key] || (sub.code && completedTopics[altKey]) || completedTopics[topic.name]) {
           covered.push({
             subjectName: sub.name,
             unitName: unit.name,
             topicName: topic.name,
-            resource: topic.resource
+            resource: topic.resource || topic.resourceUrl || ''
           });
         }
       });
@@ -324,14 +464,14 @@ function populateModeBTopics() {
   if (covered.length === 0) {
     countLbl.textContent = '0 Completed Topics Detected';
     container.innerHTML = `
-      <div style="width:100%; padding:10px; background:#FEF3C7; border:1px solid #FCD34D; border-radius:var(--radius-sm); color:#92400E; font-size:12px;">
-        ⚠️ You haven't marked any topics as completed in <strong>${domain.name}</strong> yet.<br/>
-        Check off topics in your <strong>Syllabus Roadmap</strong>, or check <em>"Include upcoming topics as diagnostic questions"</em> below to test your readiness.
+      <div style="width:100%; padding:10px; background:#FEF3C7; border:1px solid #FCD34D; border-radius:var(--radius-sm); color:#92400E; font-size:12px; line-height:1.5;">
+        ⚠️ You haven't checked off any completed topics in <strong>${escapeHtml(domain.name)}</strong> yet.<br/>
+        Check off topics in your <strong><a href="roadmap.html" style="text-decoration:underline; font-weight:600; color:#92400E;">Syllabus Roadmap</a></strong>, or enable <em>"Include upcoming topics as diagnostic questions"</em> below to test your baseline readiness.
       </div>`;
     return;
   }
 
-  countLbl.textContent = `${covered.length} Topics Covered in ${domain.name}`;
+  countLbl.textContent = `${covered.length} Topics Completed in ${domain.name}`;
   container.innerHTML = covered.map(c => `
     <span class="badge badge-blue" style="font-size:11px; padding:3px 8px; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(c.subjectName)}: ${escapeHtml(c.topicName)}">
       ✓ ${escapeHtml(c.topicName)}
@@ -397,15 +537,19 @@ window.generateProgressTest = async function() {
   const btn         = document.getElementById('gen-progress-test-btn');
   const domain      = DomainManager.getActiveDomain();
 
-  // Find completed topics
+  // Find completed and upcoming topics
   const coveredTopics = [];
   const upcomingTopics = [];
 
   domainRoadmap.forEach(sub => {
+    const subCode = sub.code || sub.id || 'SUB';
     (sub.units || []).forEach(unit => {
+      const uId = unit.id || unit.name || 'U';
       (unit.topics || []).forEach(topic => {
-        const key = `${sub.code}_${unit.id}_${topic.id}`;
-        if (completedTopics[key]) {
+        const tId = topic.id || topic.name || 'T';
+        const key = `${subCode}_${uId}_${tId}`;
+        const altKey = `${sub.code}_${unit.id}_${topic.id}`;
+        if (completedTopics[key] || (sub.code && completedTopics[altKey]) || completedTopics[topic.name]) {
           coveredTopics.push(topic.name);
         } else {
           upcomingTopics.push(topic.name);
@@ -418,17 +562,17 @@ window.generateProgressTest = async function() {
 
   if (targetTopics.length === 0) {
     if (!includeDiag) {
-      showToast('No completed topics found. Check topics in Roadmap or enable diagnostic mode.', 'warning');
+      showToast('No completed topics found. Check topics in Roadmap or enable diagnostic mode below.', 'warning');
       return;
     }
-    // Pick the first few upcoming topics for a diagnostic assessment
+    // Diagnostic mode: pick first upcoming topics
     targetTopics = upcomingTopics.slice(0, Math.min(8, upcomingTopics.length));
     if (targetTopics.length === 0) {
       showToast('No topics found in active domain.', 'error');
       return;
     }
   } else if (includeDiag && upcomingTopics.length > 0) {
-    // Add 2 diagnostic topics
+    // Add up to 2 diagnostic upcoming topics
     targetTopics.push(...upcomingTopics.slice(0, 2));
   }
 
@@ -463,26 +607,38 @@ async function runTestGeneration({ mode, subjectName, unitName, topicNames, numQ
     let questions = [];
 
     if (apiKey) {
-      questions = await callGeminiAI({
-        apiKey,
-        subjectName,
-        unitName,
-        topicNames,
-        numQ,
-        mode,
-        sourceDescription
-      });
+      try {
+        questions = await callGeminiAI({
+          apiKey,
+          subjectName,
+          unitName,
+          topicNames,
+          numQ,
+          mode,
+          sourceDescription
+        });
+      } catch (aiErr) {
+        console.warn('Gemini AI call failed, falling back to curated question bank:', aiErr.message);
+        showToast(`AI generation unavailable (${aiErr.message || 'error'}). Generating curated practice questions.`, 'warning');
+        questions = generateOfflineFallback(subjectName, topicNames, numQ);
+      }
     } else {
       questions = generateOfflineFallback(subjectName, topicNames, numQ);
-      showToast('Offline Mode: Basic concept questions generated. Add Gemini API Key in Settings for AI tests.', 'warning');
+      showToast('Offline Mode: Practice questions generated. Add Gemini API Key in Settings for AI tests.', 'info');
+    }
+
+    if (!questions || questions.length === 0) {
+      questions = generateOfflineFallback(subjectName, topicNames, numQ);
     }
 
     currentQuestions = questions;
     renderQuestions(questions, mode, topicNames, sourceDescription);
     document.getElementById('submit-row').style.display = 'block';
 
-    // Scroll to questions area smoothly
-    document.getElementById('questions-area')?.scrollIntoView({ behavior: 'smooth' });
+    // Scroll smoothly to questions area
+    setTimeout(() => {
+      document.getElementById('questions-area')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
 
   } catch (err) {
     console.error('Test generation error:', err);
@@ -505,12 +661,12 @@ Scope:
 - Specific Topics in Scope:
 ${topicNames.map(t => `- ${t}`).join('\n')}
 
-Generate exactly ${numQ} rigorous multiple-choice questions testing conceptual clarity and problem-solving.
+Generate exactly ${numQ} rigorous multiple-choice questions testing conceptual clarity, code behavior, and problem-solving.
 Each question MUST have:
 1. "question": Specific question text.
-2. "options": Array of exactly 4 strings [Option A, Option B, Option C, Option D].
-3. "correct": Correct option index (0 for A, 1 for B, 2 for C, 3 for D).
-4. "explanation": 1-2 sentence concise explanation of why the answer is correct.
+2. "options": Array of exactly 4 distinct strings [Option A, Option B, Option C, Option D].
+3. "correct": Correct option index (0 for A, 1 for B, 2 for C, 3 for D). Distribute correct answers across 0, 1, 2, and 3.
+4. "explanation": 1-2 sentence concise explanation of why the answer is correct and why other options are incorrect.
 5. "topic": The exact topic name from the scope list above.
 
 Return ONLY a valid JSON array in this exact format with NO markdown wrapping or preamble:
@@ -528,7 +684,8 @@ Return ONLY a valid JSON array in this exact format with NO markdown wrapping or
     contents: [{ parts: [{ text: prompt }] }],
     generationConfig: {
       temperature: 0.65,
-      maxOutputTokens: 4096
+      maxOutputTokens: 4096,
+      responseMimeType: "application/json"
     }
   };
 
@@ -538,11 +695,24 @@ Return ONLY a valid JSON array in this exact format with NO markdown wrapping or
   for (const model of GEMINI_MODELS) {
     try {
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      const response = await fetch(endpoint, {
+      let response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody)
       });
+
+      // If model does not support responseMimeType (400 Bad Request), retry without it
+      if (!response.ok && response.status === 400) {
+        const retryBody = {
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.65, maxOutputTokens: 4096 }
+        };
+        response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(retryBody)
+        });
+      }
 
       if (!response.ok) {
         const errJson = await response.json().catch(() => ({}));
@@ -562,54 +732,267 @@ Return ONLY a valid JSON array in this exact format with NO markdown wrapping or
     throw lastError || new Error('All Gemini API models failed. Please check your API key in Settings.');
   }
 
-  let cleanJson = rawText.replace(/```json\n?/gi, '').replace(/```\n?/g, '').trim();
-  const match = cleanJson.match(/\[[\s\S]*\]/);
-  if (match) cleanJson = match[0];
+  // Parse JSON response resiliently
+  let cleanJson = rawText
+    .replace(/```json\s*/gi, '')
+    .replace(/```\s*/g, '')
+    .trim();
 
-  const parsed = JSON.parse(cleanJson);
-  if (!Array.isArray(parsed)) throw new Error('AI returned non-array JSON format.');
+  let parsed = null;
+  try {
+    parsed = JSON.parse(cleanJson);
+  } catch (e1) {
+    const arrayMatch = cleanJson.match(/\[[\s\S]*\]/);
+    if (arrayMatch) {
+      try { parsed = JSON.parse(arrayMatch[0]); } catch (e2) {}
+    }
+    if (!parsed) {
+      const objMatch = cleanJson.match(/\{[\s\S]*\}/);
+      if (objMatch) {
+        try { parsed = JSON.parse(objMatch[0]); } catch (e3) {}
+      }
+    }
+  }
 
-  return parsed.map(q => {
+  let list = [];
+  if (Array.isArray(parsed)) {
+    list = parsed;
+  } else if (parsed && typeof parsed === 'object') {
+    if (Array.isArray(parsed.questions)) list = parsed.questions;
+    else if (Array.isArray(parsed.test)) list = parsed.test;
+    else if (Array.isArray(parsed.mcqs)) list = parsed.mcqs;
+    else {
+      const arrKey = Object.keys(parsed).find(k => Array.isArray(parsed[k]));
+      if (arrKey) list = parsed[arrKey];
+    }
+  }
+
+  if (!list || list.length === 0) {
+    throw new Error('AI returned non-array JSON format.');
+  }
+
+  return list.map((q, idx) => {
     let cIdx = 0;
     if (typeof q.correct === 'number') {
       cIdx = q.correct;
     } else if (typeof q.correct === 'string') {
       const t = q.correct.trim().toUpperCase();
-      if (t === 'A' || t === '0') cIdx = 0;
-      else if (t === 'B' || t === '1') cIdx = 1;
-      else if (t === 'C' || t === '2') cIdx = 2;
-      else if (t === 'D' || t === '3') cIdx = 3;
-      else cIdx = parseInt(t, 10) || 0;
+      if (t === 'A' || t === '0' || t.startsWith('OPTION A')) cIdx = 0;
+      else if (t === 'B' || t === '1' || t.startsWith('OPTION B')) cIdx = 1;
+      else if (t === 'C' || t === '2' || t.startsWith('OPTION C')) cIdx = 2;
+      else if (t === 'D' || t === '3' || t.startsWith('OPTION D')) cIdx = 3;
+      else {
+        const found = (q.options || []).findIndex(opt => opt && opt.toLowerCase().trim() === q.correct.toLowerCase().trim());
+        cIdx = found >= 0 ? found : (parseInt(t, 10) || 0);
+      }
+    }
+
+    const options = Array.isArray(q.options) && q.options.length >= 4
+      ? q.options.slice(0, 4)
+      : (Array.isArray(q.options) && q.options.length > 0 ? q.options : ['Option A', 'Option B', 'Option C', 'Option D']);
+    while (options.length < 4) {
+      options.push(`Option ${['A','B','C','D'][options.length]}`);
     }
 
     return {
-      question:    q.question || 'Concept Question',
-      options:     Array.isArray(q.options) && q.options.length >= 4 ? q.options.slice(0, 4) : ['Option A', 'Option B', 'Option C', 'Option D'],
+      question:    q.question || `Concept Question on ${topicNames[idx % topicNames.length] || subjectName}`,
+      options:     options,
       correct:     Math.min(Math.max(cIdx, 0), 3),
-      explanation: q.explanation || 'Refer to your syllabus notes and documentation for in-depth explanation.',
-      topic:       q.topic || (topicNames[0] || 'Curriculum Topic')
+      explanation: q.explanation || 'Refer to your syllabus notes and lecture resources for in-depth explanation.',
+      topic:       q.topic || (topicNames[idx % topicNames.length] || subjectName)
     };
   });
 }
 
-// ─── OFFLINE FALLBACK QUESTIONS ───────────────────────────────
+// ─── CURATED TECHNICAL QUESTION BANK ──────────────────────────
+const CURATED_TECHNICAL_KB = [
+  {
+    keywords: ['array', 'prefix sum', 'subarray'],
+    question: 'What is the time complexity to compute the sum of any contiguous subarray [L, R] using a precomputed Prefix Sum array?',
+    options: ['O(1) time complexity', 'O(N) time complexity', 'O(log N) time complexity', 'O(R - L) time complexity'],
+    correct: 0,
+    explanation: 'With a precomputed prefix sum array, any range sum [L, R] is calculated in O(1) time using: P[R] - P[L - 1].'
+  },
+  {
+    keywords: ['two sum', 'hash', 'table', 'map'],
+    question: 'How does an unordered hash map reduce the time complexity of the Two-Sum problem from O(N²) brute force?',
+    options: ['Reduces time to O(N) by storing visited complements for O(1) average lookup', 'Reduces time to O(N log N) by sorting the array', 'Reduces space complexity to O(1)', 'Guarantees worst-case O(1) lookup even under severe hash collisions'],
+    correct: 0,
+    explanation: 'By checking whether (target - current_element) exists in the hash map during iteration, the lookup is O(1) average, achieving O(N) total time.'
+  },
+  {
+    keywords: ['stack', 'lifo', 'parentheses'],
+    question: 'Which data structure principle underlies expression parsing and balanced parentheses verification?',
+    options: ['LIFO (Last-In, First-Out) via a Stack', 'FIFO (First-In, First-Out) via a Queue', 'Random access via contiguous array pointers', 'Priority ordering via Min-Heap'],
+    correct: 0,
+    explanation: 'A stack operates on LIFO order, ensuring that the most recently opened parenthesis is matched first with the next closing symbol.'
+  },
+  {
+    keywords: ['queue', 'fifo', 'circular'],
+    question: 'What primary problem does a Circular Queue solve compared to a linear array-based queue?',
+    options: ['Memory wastage caused by unused space when front pointer advances', 'Time complexity of enqueue operation becoming O(N)', 'Inability to store primitive data types', 'Lack of support for dynamic pointer linking'],
+    correct: 0,
+    explanation: 'In a linear array queue, dequeuing elements leaves empty slots at the front that cannot be reused without shifting; circular queues wrap around using modulo arithmetic.'
+  },
+  {
+    keywords: ['linked list', 'floyd', 'cycle'],
+    question: 'In Floyd’s Cycle-Finding Algorithm (Tortoise and Hare), how are the two pointers initialized and moved?',
+    options: ['Slow pointer advances 1 node; fast pointer advances 2 nodes per step', 'Both pointers move 1 node in opposite directions', 'Fast pointer advances 3 nodes while slow pointer remains stationary', 'Fast pointer moves only when slow pointer reaches a NULL reference'],
+    correct: 0,
+    explanation: 'Floyd\'s algorithm moves the slow pointer by 1 step and the fast pointer by 2 steps. If a cycle exists, they are guaranteed to meet inside the loop.'
+  },
+  {
+    keywords: ['tree', 'binary search tree', 'bst'],
+    question: 'What is the characteristic property of a valid Binary Search Tree (BST)?',
+    options: ['Left subtree values < Root value < Right subtree values for every node', 'Every node has exactly two children', 'The height of left and right subtrees differs by at most 1', 'Nodes are inserted in sorted order from left to right on each level'],
+    correct: 0,
+    explanation: 'In a BST, all keys in the left subtree of a node must be less than the node’s key, and all keys in the right subtree must be greater.'
+  },
+  {
+    keywords: ['graph', 'bfs', 'dfs', 'shortest'],
+    question: 'Which traversal algorithm is guaranteed to find the shortest path in an unweighted graph?',
+    options: ['Breadth-First Search (BFS)', 'Depth-First Search (DFS)', 'Pre-order Traversal', 'Post-order Traversal'],
+    correct: 0,
+    explanation: 'BFS explores nodes level by level in order of distance from the source, guaranteeing the shortest path in unweighted graphs.'
+  },
+  {
+    keywords: ['process', 'thread', 'cpu', 'scheduling'],
+    question: 'What is the fundamental difference in resource sharing between processes and threads?',
+    options: ['Threads of the same process share memory address space and open files, whereas processes have isolated address spaces', 'Processes share virtual memory pages while threads have independent physical pages', 'Threads cannot run concurrently on multi-core CPUs', 'Processes switch context faster than threads'],
+    correct: 0,
+    explanation: 'Threads within the same process share code, data, and OS resources, resulting in lightweight context switching, whereas processes have isolated memory spaces.'
+  },
+  {
+    keywords: ['deadlock', 'mutex', 'semaphore'],
+    question: 'Which of the following is NOT one of Coffman’s four necessary conditions for deadlock to occur?',
+    options: ['Preemptive resource allocation by operating system', 'Mutual exclusion', 'Hold and wait', 'Circular wait'],
+    correct: 0,
+    explanation: 'The four Coffman conditions are Mutual Exclusion, Hold and Wait, No Preemption, and Circular Wait. Preemption breaks deadlock.'
+  },
+  {
+    keywords: ['sql', 'acid', 'transaction', 'dbms'],
+    question: 'Under ACID properties in relational databases, what does the "A" (Atomicity) guarantee?',
+    options: ['All operations in a transaction complete successfully, or all changes are rolled back completely', 'Data is replicated simultaneously across multiple physical clusters', 'Transactions are executed sequentially without interleaving', 'Transactions persist even after unexpected system crashes'],
+    correct: 0,
+    explanation: 'Atomicity ensures "all-or-nothing" execution: if any statement in a transaction fails, the entire transaction is rolled back.'
+  },
+  {
+    keywords: ['rest', 'api', 'http', 'status'],
+    question: 'Which HTTP status code should be returned when a client successfully creates a new resource via POST?',
+    options: ['201 Created', '200 OK', '204 No Content', '302 Found'],
+    correct: 0,
+    explanation: 'HTTP 201 Created indicates that the request succeeded and led to the creation of a new resource.'
+  },
+  {
+    keywords: ['javascript', 'promise', 'async', 'await'],
+    question: 'What does the async keyword do when prepended to a JavaScript function?',
+    options: ['It causes the function to automatically return a Promise that resolves with the returned value', 'It executes the function in a dedicated background worker thread', 'It forces synchronous blocking execution', 'It pauses the JavaScript event loop until finished'],
+    correct: 0,
+    explanation: 'An async function always returns a Promise; non-Promise return values are automatically wrapped in a resolved Promise.'
+  }
+];
+
+// ─── OFFLINE FALLBACK QUESTIONS GENERATOR ─────────────────────
 function generateOfflineFallback(subjectName, topicNames, numQ) {
   const questions = [];
+  const scopeTopics = topicNames.length > 0 ? topicNames : [subjectName];
+
+  // Template variations to make questions engaging and diverse
+  const templates = [
+    {
+      q: (t, s) => `Which statement accurately describes the core mechanism or purpose of "${t}" in ${s}?`,
+      correctTpl: (t) => `It provides a structured, deterministic approach to implementing "${t}" with optimized execution.`,
+      d1: () => `It is an obsolete construct prohibited by modern compiler optimization standards.`,
+      d2: () => `It operates solely at the hardware firmware register layer without software abstraction.`,
+      d3: () => `It requires linear reallocation of the entire memory space on every access.`,
+      exp: (t) => `"${t}" is an established core concept designed for structured, efficient computational problem-solving.`
+    },
+    {
+      q: (t, s) => `When applying "${t}" in ${s}, what primary performance trade-off or advantage must be considered?`,
+      correctTpl: (t) => `Balancing time complexity against auxiliary memory overhead required by "${t}".`,
+      d1: () => `Elimination of all CPU clock cycle latency across distributed networks.`,
+      d2: () => `Zero memory allocation regardless of the input data volume.`,
+      d3: () => `Automatic conversion of synchronous threads into kernel interrupts.`,
+      exp: (t) => `Optimal utilization of "${t}" requires engineering trade-offs between algorithmic speed and space consumption.`
+    },
+    {
+      q: (t, s) => `In real-world software architecture, which scenario is best suited for "${t}"?`,
+      correctTpl: (t) => `When modularity, predictable state transitions, and maintainability are critical for "${t}".`,
+      d1: () => `Only when compiling unmanaged assembly for 8-bit microcontrollers.`,
+      d2: () => `When bypassing all operating system memory security safeguards.`,
+      d3: () => `Only in single-user batch processing with offline persistent disk storage.`,
+      exp: (t) => `"${t}" is adopted in industry to maintain clean separation of concerns and robust runtime stability.`
+    },
+    {
+      q: (t, s) => `What common problem or bug does proper understanding of "${t}" prevent in ${s}?`,
+      correctTpl: (t) => `Unintended side effects, race conditions, or suboptimal algorithmic bottlenecks related to "${t}".`,
+      d1: () => `Physical semiconductor hardware degradation over prolonged use.`,
+      d2: () => `Inability of power supplies to regulate dynamic voltage.`,
+      d3: () => `Syntax incompatibility between different keyboard input encodings.`,
+      exp: (t) => `Mastery of "${t}" prevents performance degradation and logic defects in production environments.`
+    }
+  ];
+
   for (let i = 0; i < numQ; i++) {
-    const topic = topicNames[i % topicNames.length];
+    const topic = scopeTopics[i % scopeTopics.length];
+    const topicLower = topic.toLowerCase();
+
+    // Check if we have a match in the curated technical knowledge bank
+    const matchedCurated = CURATED_TECHNICAL_KB.find(item =>
+      item.keywords.some(k => topicLower.includes(k) || subjectName.toLowerCase().includes(k))
+    );
+
+    if (matchedCurated && Math.random() < 0.65) {
+      // Shuffle options so correct is not always 0
+      const optionsWithMeta = matchedCurated.options.map((opt, oIdx) => ({
+        text: opt,
+        isCorrect: oIdx === matchedCurated.correct
+      }));
+
+      // Shuffle options array
+      for (let j = optionsWithMeta.length - 1; j > 0; j--) {
+        const rand = Math.floor(Math.random() * (j + 1));
+        [optionsWithMeta[j], optionsWithMeta[rand]] = [optionsWithMeta[rand], optionsWithMeta[j]];
+      }
+
+      const correctIndex = optionsWithMeta.findIndex(o => o.isCorrect);
+
+      questions.push({
+        question: matchedCurated.question,
+        options: optionsWithMeta.map(o => o.text),
+        correct: correctIndex,
+        explanation: matchedCurated.explanation,
+        topic: topic
+      });
+      continue;
+    }
+
+    // Procedural generation with randomized answer placement
+    const tpl = templates[i % templates.length];
+    const correctText = tpl.correctTpl(topic);
+    const distractors = [tpl.d1(topic), tpl.d2(topic), tpl.d3(topic)];
+
+    // Randomize correct answer position between 0, 1, 2, 3
+    const correctPos = Math.floor(Math.random() * 4);
+    const options = [];
+    let dIdx = 0;
+    for (let pos = 0; pos < 4; pos++) {
+      if (pos === correctPos) {
+        options.push(correctText);
+      } else {
+        options.push(distractors[dIdx++]);
+      }
+    }
+
     questions.push({
-      question: `Which statement accurately describes the core purpose or mechanism of "${topic}" in ${subjectName}?`,
-      options: [
-        `It serves as an essential component and concept in ${subjectName} implementation.`,
-        `It is deprecated syntax incompatible with standard computer science architectures.`,
-        `It refers solely to legacy hardware register configurations.`,
-        `It operates exclusively outside the domain of software systems.`
-      ],
-      correct: 0,
-      explanation: `"${topic}" is a verified concept within ${subjectName}. For AI-generated technical questions, connect your Gemini API key in Settings.`,
+      question: tpl.q(topic, subjectName),
+      options: options,
+      correct: correctPos,
+      explanation: tpl.exp(topic),
       topic: topic
     });
   }
+
   return questions;
 }
 
@@ -623,10 +1006,10 @@ function renderQuestions(questions, mode, topicNames, sourceDescription) {
     <div style="background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:16px 20px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
       <div>
         <div style="font-weight:700; font-size:15px; color:var(--color-text);">
-          ${mode === 'progress' ? 'Mode B: Progress-Based Test' : 'Mode A: Custom Practice Test'}
+          ${mode === 'progress' ? 'Mode B: Progress-Based Practice Test' : 'Mode A: Custom Practice Test'}
         </div>
         <div class="text-xs text-muted" style="margin-top:2px;">
-          Generated from: ${escapeHtml(sourceDescription)} • ${questions.length} questions
+          Source: ${escapeHtml(sourceDescription)} • ${questions.length} questions
         </div>
       </div>
       <div style="display:flex; flex-wrap:wrap; gap:4px; max-width:400px;">
@@ -701,6 +1084,7 @@ window.submitTest = async function() {
       const btn = document.getElementById(`opt-${idx}-${i}`);
       if (!btn) continue;
       btn.disabled = true;
+      btn.classList.remove('selected');
 
       if (i === correct) {
         btn.classList.add('correct');
@@ -724,35 +1108,57 @@ window.submitTest = async function() {
 
   if (scoreDisp) scoreDisp.textContent = `${score} / ${total} (${pct}%)`;
   if (scoreMsg) {
-    if (pct >= 80) scoreMsg.textContent = '🎉 Excellent mastery! You are well prepared in these topics.';
-    else if (pct >= 60) scoreMsg.textContent = '👍 Good job! Review the explanations for any missed questions.';
-    else scoreMsg.textContent = '📚 Keep revising! Watch the attached topic videos and try again.';
+    if (pct >= 80) scoreMsg.textContent = '🎉 Excellent mastery! You are thoroughly prepared in these topics.';
+    else if (pct >= 60) scoreMsg.textContent = '👍 Good job! Review the explanations for any missed questions below.';
+    else scoreMsg.textContent = '📚 Keep revising! Review topic resources in your Roadmap and try another test.';
   }
   if (scoreCard) scoreCard.classList.add('visible');
-  scoreCard?.scrollIntoView({ behavior: 'smooth' });
 
   // Hide submit button
   document.getElementById('submit-row').style.display = 'none';
 
-  // Save result to Firestore
-  try {
-    await addDoc(collection(db, 'tests'), {
-      userId: currentUser.uid,
-      domainId: currentDomainId,
-      mode: activeMode === 'A' ? 'custom' : 'progress',
-      subjectName: testSubject,
-      unitName: testUnit,
-      score: score,
-      totalQuestions: total,
-      percentage: pct,
-      topicsCovered: testTopicsList.slice(0, 20),
-      createdAt: serverTimestamp()
-    });
+  // Smooth scroll to score card
+  setTimeout(() => {
+    scoreCard?.scrollIntoView({ behavior: 'smooth' });
+  }, 100);
 
-    await loadTestHistory();
-  } catch (err) {
-    console.error('Error saving test result:', err);
-    showToast('Failed to save test result to cloud.', 'error');
+  // 1. Immediately save to LocalStorage (Offline-first 0ms)
+  const testRecord = {
+    id: 'test_' + Date.now(),
+    userId: currentUser ? currentUser.uid : 'local',
+    domainId: currentDomainId,
+    mode: activeMode === 'A' ? 'custom' : 'progress',
+    subjectName: testSubject,
+    unitName: testUnit,
+    score: score,
+    totalQuestions: total,
+    percentage: pct,
+    topicsCovered: testTopicsList.slice(0, 20),
+    createdAt: new Date().toISOString()
+  };
+
+  saveTestRecordLocally(testRecord);
+  renderCachedTestHistory();
+
+  // 2. Cloud Firestore Sync if user is authenticated
+  if (currentUser && db) {
+    try {
+      await addDoc(collection(db, 'tests'), {
+        userId: currentUser.uid,
+        domainId: currentDomainId,
+        mode: activeMode === 'A' ? 'custom' : 'progress',
+        subjectName: testSubject,
+        unitName: testUnit,
+        score: score,
+        totalQuestions: total,
+        percentage: pct,
+        topicsCovered: testTopicsList.slice(0, 20),
+        createdAt: serverTimestamp()
+      });
+      syncTestHistoryFromCloud();
+    } catch (err) {
+      console.warn('Test result cloud sync note (saved locally):', err);
+    }
   }
 };
 
@@ -766,21 +1172,36 @@ window.resetTest = function() {
 };
 
 // ─── TEST HISTORY (LOCAL CACHE + CLOUD SYNC) ─────────────────
-function renderCachedTestHistory() {
-  const listEl = document.getElementById('test-history-list');
-  if (!listEl) return;
-
-  let tests = [];
+function getCachedTestHistory() {
   try {
     const raw = localStorage.getItem(`studypilot_test_history_${currentDomainId}`);
-    if (raw) tests = JSON.parse(raw);
+    if (raw) return JSON.parse(raw);
   } catch (e) {}
+  return [];
+}
+
+function saveTestRecordLocally(record) {
+  try {
+    const existing = getCachedTestHistory();
+    const updated = [record, ...existing.filter(t => t.id !== record.id)].slice(0, 25);
+    localStorage.setItem(`studypilot_test_history_${currentDomainId}`, JSON.stringify(updated));
+  } catch (e) {}
+}
+
+function renderCachedTestHistory() {
+  const listEl = document.getElementById('test-history-list');
+  const clearBtn = document.getElementById('clear-tests-btn');
+  if (!listEl) return;
+
+  const tests = getCachedTestHistory();
 
   if (!tests || tests.length === 0) {
-    listEl.innerHTML = `<div class="empty-state"><p class="text-muted text-sm">No test attempts for this domain yet. Take a test above.</p></div>`;
+    if (clearBtn) clearBtn.style.display = 'none';
+    listEl.innerHTML = `<div class="empty-state"><p class="text-muted text-sm">No test attempts for this domain yet. Generate your first test above.</p></div>`;
     return;
   }
 
+  if (clearBtn) clearBtn.style.display = 'inline-block';
   renderTestHistoryList(tests);
 }
 
@@ -818,6 +1239,15 @@ function renderTestHistoryList(tests) {
   }).join('');
 }
 
+window.clearTestHistory = function() {
+  if (!confirm('Are you sure you want to clear your test history for this domain?')) return;
+  try {
+    localStorage.removeItem(`studypilot_test_history_${currentDomainId}`);
+  } catch (e) {}
+  renderCachedTestHistory();
+  showToast('Test history cleared.', 'info');
+};
+
 async function syncTestHistoryFromCloud() {
   if (!currentUser || !db) return;
 
@@ -828,45 +1258,46 @@ async function syncTestHistoryFromCloud() {
     );
     const snap = await getDocs(q);
 
-    const tests = [];
+    const cloudTests = [];
     snap.forEach(docSnap => {
       const data = docSnap.data();
       const docDomain = data.domainId || 'aktu';
       if (docDomain === currentDomainId) {
-        tests.push({ id: docSnap.id, ...data });
+        cloudTests.push({ id: docSnap.id, ...data });
       }
     });
 
-    tests.sort((a, b) => {
+    // Merge cloud tests with local tests
+    const localTests = getCachedTestHistory();
+    const map = new Map();
+
+    localTests.forEach(t => { if (t.id) map.set(t.id, t); });
+    cloudTests.forEach(t => { if (t.id) map.set(t.id, t); });
+
+    const merged = Array.from(map.values());
+    merged.sort((a, b) => {
       const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (new Date(a.createdAt || 0)).getTime();
       const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (new Date(b.createdAt || 0)).getTime();
       return tB - tA;
     });
 
-    if (tests.length > 0) {
+    if (merged.length > 0) {
       try {
-        localStorage.setItem(`studypilot_test_history_${currentDomainId}`, JSON.stringify(tests));
+        localStorage.setItem(`studypilot_test_history_${currentDomainId}`, JSON.stringify(merged));
       } catch (e) {}
-      renderTestHistoryList(tests);
+      renderCachedTestHistory();
     }
   } catch (err) {
     console.warn('Test history cloud sync note:', err);
   }
 }
 
-async function loadTestHistory() {
-  renderCachedTestHistory();
-  if (currentUser) {
-    await syncTestHistoryFromCloud();
-  }
-}
-
 // ─── USER INFO & LOGOUT ───────────────────────────────────────
 function renderUserInfo(user) {
-  const name     = user.displayName || 'Student';
-  const av = document.getElementById('sidebar-avatar');
-  const nm = document.getElementById('sidebar-name');
-  const em = document.getElementById('sidebar-email');
+  const name = user.displayName || 'Student';
+  const av   = document.getElementById('sidebar-avatar');
+  const nm   = document.getElementById('sidebar-name');
+  const em   = document.getElementById('sidebar-email');
 
   if (av) av.textContent = name.charAt(0).toUpperCase();
   if (nm) nm.textContent = name;
@@ -877,12 +1308,3 @@ window.handleLogout = async function() {
   await signOut(auth);
   window.location.href = '../index.html';
 };
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
