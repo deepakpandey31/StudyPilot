@@ -79,6 +79,76 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+// ─── CANONICAL SUBJECT AUTO-DETECTOR ───────────────────────────
+const CANONICAL_SUBJECT_MATCHERS = [
+  // Semester 3 (BCS-Series)
+  { code: 'BCS302', name: 'Computer Organization and Architecture', aliases: ['computer organization and architecture', 'computer organization', 'computer architecture', 'coa', 'co&a', 'cpu architecture'] },
+  { code: 'BCS303', name: 'Discrete Structures and Theory of Logic', aliases: ['discrete structures and theory of logic', 'discrete structures', 'discrete mathematics', 'discrete math', 'discrete maths', 'dstl', 'theory of logic', 'boolean algebra', 'graph theory', 'relations and functions'] },
+  { code: 'BCS301', name: 'Data Structure', aliases: ['data structure', 'data structures', 'linked list', 'trees and graphs', 'stack and queue', 'sorting algorithms'] },
+  { code: 'BAS303', name: 'Mathematics III, IV or V', aliases: ['mathematics iii', 'mathematics 3', 'maths iii', 'maths 3', 'math 3', 'math iii', 'bas303'] },
+  { code: 'BOE3**', name: 'Science-Based Open Elective', aliases: ['science-based open elective', 'science based open elective', 'boe3'] },
+  { code: 'BVE301', name: 'Universal Human Values & Professional Ethics', aliases: ['universal human values', 'human values', 'professional ethics', 'uhv', 'bve301'] },
+  { code: 'BAS301', name: 'Technical Communication', aliases: ['technical communication', 'bas301'] },
+  { code: 'BCC301', name: 'Cyber Security', aliases: ['cyber security', 'cybersecurity', 'bcc301', 'information security'] },
+  { code: 'BCC302', name: 'Python Programming', aliases: ['python programming', 'python syntax', 'bcc302'] },
+  { code: 'BCS353', name: 'Web Designing Workshop', aliases: ['web designing workshop', 'web design workshop', 'bcs353'] },
+
+  // Semester 4 (BCS-Series)
+  { code: 'BCS401', name: 'Operating System', aliases: ['operating system', 'operating systems', 'bcs401', 'cpu scheduling', 'deadlock', 'virtual memory', 'process synchronization'] },
+  { code: 'BCS402', name: 'Theory of Automata and Formal Languages', aliases: ['theory of automata and formal languages', 'theory of automata', 'automata and formal languages', 'automata theory', 'tafl', 'toc', 'bcs402', 'theory of computation', 'turing machine', 'finite automata', 'cfg', 'pda'] },
+  { code: 'BCS403', name: 'Object-Oriented Programming with Java', aliases: ['object-oriented programming with java', 'oop with java', 'oops with java', 'java programming', 'bcs403', 'java oops', 'core java'] },
+  { code: 'BAS403', name: 'Mathematics III, IV or V', aliases: ['mathematics iv', 'mathematics 4', 'maths iv', 'maths 4', 'math 4', 'math iv', 'bas403'] },
+  { code: 'BOE4**', name: 'Science-Based Open Elective', aliases: ['science-based open elective', 'boe4'] },
+  { code: 'BAS401', name: 'Technical Communication', aliases: ['technical communication', 'bas401'] },
+  { code: 'BVE401', name: 'Universal Human Values and Professional Ethics', aliases: ['universal human values and professional ethics', 'human values', 'bve401'] },
+  { code: 'BCC402', name: 'Python Programming', aliases: ['python programming', 'bcc402'] },
+  { code: 'BCC401', name: 'Cyber Security', aliases: ['cyber security', 'bcc401'] },
+
+  // Semester 1 & 2 (2026–27 CSE Stream)
+  { code: 'AAS101E', name: 'Quantum Physics and Applications', aliases: ['quantum physics', 'applied physics', 'modern physics', 'aas101e', 'aas201e'] },
+  { code: 'AAS102D', name: 'Applied Chemistry for Smart Systems', aliases: ['applied chemistry', 'engineering chemistry', 'smart systems', 'aas102d', 'aas202d'] },
+  { code: 'AAS103D', name: 'Calculus and Linear Algebra', aliases: ['calculus and linear algebra', 'calculus', 'linear algebra', 'aas103d', 'engineering mathematics 1', 'maths 1'] },
+  { code: 'AAS203D', name: 'Numerical Methods', aliases: ['numerical methods', 'aas203d', 'engineering mathematics 2', 'maths 2'] },
+  { code: 'AEE101A', name: 'Fundamentals of Electrical Engineering', aliases: ['electrical engineering', 'basic electrical', 'aee101a', 'aee201a', 'bee'] },
+  { code: 'AEC101A', name: 'Fundamentals of Electronics Engineering', aliases: ['electronics engineering', 'basic electronics', 'aec101a', 'aec201a'] },
+  { code: 'ACS101',  name: 'Programming Languages', aliases: ['programming languages', 'c programming', 'programming in c', 'acs101'] },
+  { code: 'ACS201',  name: 'Essentials of Data Structures', aliases: ['essentials of data structures', 'acs201'] },
+  { code: 'AAI101',  name: 'Introduction to AI and Prompt Engineering', aliases: ['prompt engineering', 'artificial intelligence', 'aai101', 'aai201', 'generative ai'] },
+  { code: 'AME101A', name: 'Fundamentals of Mechanical Engineering', aliases: ['mechanical engineering', 'basic mechanical', 'ame101a', 'ame201a'] },
+  { code: 'AAS105',  name: 'Professional Communication and Technical Writing', aliases: ['professional communication and technical writing', 'professional communication', 'technical writing', 'aas105', 'aas205'] },
+  { code: 'AAS104',  name: 'Introduction to Indian Knowledge System', aliases: ['indian knowledge system', 'iks', 'aas104', 'aas204'] }
+];
+
+function autoDetectSubjectFromTitle(title) {
+  if (!title) return null;
+  const lower = title.toLowerCase();
+
+  for (const item of CANONICAL_SUBJECT_MATCHERS) {
+    for (const alias of item.aliases) {
+      let isMatch = false;
+      if (alias.length <= 4) {
+        const regex = new RegExp(`\\b${alias.replace(/[*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+        isMatch = regex.test(lower);
+      } else {
+        isMatch = lower.includes(alias);
+      }
+      if (isMatch) {
+        return { code: item.code, name: item.name };
+      }
+    }
+  }
+
+  // Exact code fallback
+  for (const item of CANONICAL_SUBJECT_MATCHERS) {
+    const codeClean = item.code.replace(/[^A-Za-z0-9]/g, '').toLowerCase();
+    if (codeClean && lower.includes(codeClean)) {
+      return { code: item.code, name: item.name };
+    }
+  }
+
+  return null;
+}
+
 function setupEventListeners() {
   const domainSelect = document.getElementById('popup-domain-select');
   if (domainSelect) {
@@ -88,11 +158,6 @@ function setupEventListeners() {
     domainSelect.addEventListener('change', (e) => {
       chrome.storage.local.set({ activeDomain: e.target.value });
     });
-  }
-
-  const subjectSelect = document.getElementById('popup-subject-select');
-  if (subjectSelect) {
-    subjectSelect.addEventListener('change', (e) => assignSubject(e.target.value));
   }
 
   const btnBookmark = document.getElementById('btn-bookmark');
@@ -249,10 +314,18 @@ function updatePopupUI(data) {
     }
   }
 
-  // Subject dropdown
-  if (data.subject) {
-    const sel = document.getElementById('popup-subject-select');
-    if (sel) sel.value = data.subject;
+  // Auto-detect subject from video title
+  const detected = autoDetectSubjectFromTitle(data.title);
+  const subjectNameEl = document.getElementById('popup-subject-name');
+  if (subjectNameEl) {
+    if (detected) {
+      subjectNameEl.textContent = `${detected.code} — ${detected.name}`;
+      subjectNameEl.title = `${detected.code} — ${detected.name}`;
+      subjectNameEl.style.color = 'var(--color-primary)';
+    } else {
+      subjectNameEl.textContent = 'Auto-categorized by Topic';
+      subjectNameEl.style.color = 'var(--color-muted)';
+    }
   }
 
   // Study toggle button
@@ -316,6 +389,11 @@ window.bookmarkVideo = async function(category = 'important') {
   const currentTime   = Math.floor(videoData.currentTime || 0);
   const timeFormatted = formatTimestamp(currentTime);
 
+  // Auto-detect subject from video title
+  const detected = autoDetectSubjectFromTitle(videoData.title);
+  const autoSubject = detected ? `${detected.code} — ${detected.name}` : (videoData.subject || '');
+  const autoCode = detected ? detected.code : '';
+
   chrome.runtime.sendMessage({
     type:               'MARK_VIDEO_BOOKMARKED',
     videoId:            videoData.videoId,
@@ -329,7 +407,8 @@ window.bookmarkVideo = async function(category = 'important') {
     currentTime:        currentTime,
     timestampFormatted: timeFormatted,
     domainId:           domainId,
-    subject:            videoData.subject || ''
+    subject:            autoSubject,
+    subjectCode:        autoCode
   }, (response) => {
     if (response?.ok) {
       // Show visual confirmation

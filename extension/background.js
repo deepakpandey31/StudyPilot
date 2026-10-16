@@ -164,6 +164,76 @@ async function getTodayMinutes() {
   return 0;
 }
 
+// ─── CANONICAL SUBJECT AUTO-DETECTOR ───────────────────────────
+const CANONICAL_SUBJECT_MATCHERS = [
+  // Semester 3 (BCS-Series)
+  { code: 'BCS302', name: 'Computer Organization and Architecture', aliases: ['computer organization and architecture', 'computer organization', 'computer architecture', 'coa', 'co&a', 'cpu architecture'] },
+  { code: 'BCS303', name: 'Discrete Structures and Theory of Logic', aliases: ['discrete structures and theory of logic', 'discrete structures', 'discrete mathematics', 'discrete math', 'discrete maths', 'dstl', 'theory of logic', 'boolean algebra', 'graph theory', 'relations and functions'] },
+  { code: 'BCS301', name: 'Data Structure', aliases: ['data structure', 'data structures', 'linked list', 'trees and graphs', 'stack and queue', 'sorting algorithms'] },
+  { code: 'BAS303', name: 'Mathematics III, IV or V', aliases: ['mathematics iii', 'mathematics 3', 'maths iii', 'maths 3', 'math 3', 'math iii', 'bas303'] },
+  { code: 'BOE3**', name: 'Science-Based Open Elective', aliases: ['science-based open elective', 'science based open elective', 'boe3'] },
+  { code: 'BVE301', name: 'Universal Human Values & Professional Ethics', aliases: ['universal human values', 'human values', 'professional ethics', 'uhv', 'bve301'] },
+  { code: 'BAS301', name: 'Technical Communication', aliases: ['technical communication', 'bas301'] },
+  { code: 'BCC301', name: 'Cyber Security', aliases: ['cyber security', 'cybersecurity', 'bcc301', 'information security'] },
+  { code: 'BCC302', name: 'Python Programming', aliases: ['python programming', 'python syntax', 'bcc302'] },
+  { code: 'BCS353', name: 'Web Designing Workshop', aliases: ['web designing workshop', 'web design workshop', 'bcs353'] },
+
+  // Semester 4 (BCS-Series)
+  { code: 'BCS401', name: 'Operating System', aliases: ['operating system', 'operating systems', 'bcs401', 'cpu scheduling', 'deadlock', 'virtual memory', 'process synchronization'] },
+  { code: 'BCS402', name: 'Theory of Automata and Formal Languages', aliases: ['theory of automata and formal languages', 'theory of automata', 'automata and formal languages', 'automata theory', 'tafl', 'toc', 'bcs402', 'theory of computation', 'turing machine', 'finite automata', 'cfg', 'pda'] },
+  { code: 'BCS403', name: 'Object-Oriented Programming with Java', aliases: ['object-oriented programming with java', 'oop with java', 'oops with java', 'java programming', 'bcs403', 'java oops', 'core java'] },
+  { code: 'BAS403', name: 'Mathematics III, IV or V', aliases: ['mathematics iv', 'mathematics 4', 'maths iv', 'maths 4', 'math 4', 'math iv', 'bas403'] },
+  { code: 'BOE4**', name: 'Science-Based Open Elective', aliases: ['science-based open elective', 'boe4'] },
+  { code: 'BAS401', name: 'Technical Communication', aliases: ['technical communication', 'bas401'] },
+  { code: 'BVE401', name: 'Universal Human Values and Professional Ethics', aliases: ['universal human values and professional ethics', 'human values', 'bve401'] },
+  { code: 'BCC402', name: 'Python Programming', aliases: ['python programming', 'bcc402'] },
+  { code: 'BCC401', name: 'Cyber Security', aliases: ['cyber security', 'bcc401'] },
+
+  // Semester 1 & 2 (2026–27 CSE Stream)
+  { code: 'AAS101E', name: 'Quantum Physics and Applications', aliases: ['quantum physics', 'applied physics', 'modern physics', 'aas101e', 'aas201e'] },
+  { code: 'AAS102D', name: 'Applied Chemistry for Smart Systems', aliases: ['applied chemistry', 'engineering chemistry', 'smart systems', 'aas102d', 'aas202d'] },
+  { code: 'AAS103D', name: 'Calculus and Linear Algebra', aliases: ['calculus and linear algebra', 'calculus', 'linear algebra', 'aas103d', 'engineering mathematics 1', 'maths 1'] },
+  { code: 'AAS203D', name: 'Numerical Methods', aliases: ['numerical methods', 'aas203d', 'engineering mathematics 2', 'maths 2'] },
+  { code: 'AEE101A', name: 'Fundamentals of Electrical Engineering', aliases: ['electrical engineering', 'basic electrical', 'aee101a', 'aee201a', 'bee'] },
+  { code: 'AEC101A', name: 'Fundamentals of Electronics Engineering', aliases: ['electronics engineering', 'basic electronics', 'aec101a', 'aec201a'] },
+  { code: 'ACS101',  name: 'Programming Languages', aliases: ['programming languages', 'c programming', 'programming in c', 'acs101'] },
+  { code: 'ACS201',  name: 'Essentials of Data Structures', aliases: ['essentials of data structures', 'acs201'] },
+  { code: 'AAI101',  name: 'Introduction to AI and Prompt Engineering', aliases: ['prompt engineering', 'artificial intelligence', 'aai101', 'aai201', 'generative ai'] },
+  { code: 'AME101A', name: 'Fundamentals of Mechanical Engineering', aliases: ['mechanical engineering', 'basic mechanical', 'ame101a', 'ame201a'] },
+  { code: 'AAS105',  name: 'Professional Communication and Technical Writing', aliases: ['professional communication and technical writing', 'professional communication', 'technical writing', 'aas105', 'aas205'] },
+  { code: 'AAS104',  name: 'Introduction to Indian Knowledge System', aliases: ['indian knowledge system', 'iks', 'aas104', 'aas204'] }
+];
+
+function autoDetectSubjectFromTitle(title) {
+  if (!title) return null;
+  const lower = title.toLowerCase();
+
+  for (const item of CANONICAL_SUBJECT_MATCHERS) {
+    for (const alias of item.aliases) {
+      let isMatch = false;
+      if (alias.length <= 4) {
+        const regex = new RegExp(`\\b${alias.replace(/[*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+        isMatch = regex.test(lower);
+      } else {
+        isMatch = lower.includes(alias);
+      }
+      if (isMatch) {
+        return { code: item.code, name: item.name };
+      }
+    }
+  }
+
+  // Exact code fallback
+  for (const item of CANONICAL_SUBJECT_MATCHERS) {
+    const codeClean = item.code.replace(/[^A-Za-z0-9]/g, '').toLowerCase();
+    if (codeClean && lower.includes(codeClean)) {
+      return { code: item.code, name: item.name };
+    }
+  }
+
+  return null;
+}
+
 // ─── MARK VIDEO BOOKMARKED ────────────────────────────────────
 async function markBookmarked(payload) {
   const videoId = payload.videoId;
@@ -186,12 +256,23 @@ async function markBookmarked(payload) {
     jumpUrl = cleanUrl.includes('?') ? `${cleanUrl}&t=${currentTime}s` : `${cleanUrl}?t=${currentTime}s`;
   }
 
+  // Auto-detect subject from title if not explicitly provided
+  const videoTitle = payload.title || videos[videoId]?.title || '';
+  let resolvedSubject = payload.subject || videos[videoId]?.subject || '';
+  if (!resolvedSubject && videoTitle) {
+    const detected = autoDetectSubjectFromTitle(videoTitle);
+    if (detected) {
+      resolvedSubject = `${detected.code} — ${detected.name}`;
+    }
+  }
+
   if (videos[videoId]) {
     videos[videoId].bookmarked         = true;
     videos[videoId].bookmarkCategory   = category;
     videos[videoId].bookmarkTimestamp  = currentTime;
     videos[videoId].timestampFormatted = timestampFormatted;
     videos[videoId].domainId           = domainId;
+    if (resolvedSubject) videos[videoId].subject = resolvedSubject;
   }
 
   // Key bookmarks by videoId + timestamp to support multiple timestamp notes per lecture
@@ -199,7 +280,7 @@ async function markBookmarked(payload) {
   bookmarks[bookmarkKey] = {
     id:                 bookmarkKey,
     videoId:            videoId,
-    title:              payload.title || videos[videoId]?.title || 'Untitled',
+    title:              videoTitle || 'Untitled',
     channel:            payload.channel || videos[videoId]?.channel || '',
     url:                jumpUrl,
     thumbnailUrl:       payload.thumbnailUrl || videos[videoId]?.thumbnailUrl || '',
@@ -209,7 +290,7 @@ async function markBookmarked(payload) {
     timestamp:          currentTime,
     timestampFormatted: timestampFormatted,
     domainId:           domainId,
-    subject:            payload.subject || videos[videoId]?.subject || '',
+    subject:            resolvedSubject,
     createdAt:          Date.now()
   };
 

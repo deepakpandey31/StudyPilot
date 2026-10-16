@@ -285,54 +285,10 @@
         </select>
       </div>
 
-      <!-- Subject assignment -->
-      <div class="subject-row">
-        <label for="popup-subject-select">Subject:</label>
-        <select id="popup-subject-select" class="subject-select">
-          <option value="">-- Assign subject --</option>
-          <optgroup label="AKTU 2nd Year • Semester III">
-            <option value="BCS301">BCS301 — Data Structure</option>
-            <option value="BCS302">BCS302 — Computer Org &amp; Architecture</option>
-            <option value="BCS303">BCS303 — Discrete Structures &amp; Logic</option>
-            <option value="BAS303">BAS303 — Mathematics III, IV or V</option>
-            <option value="BOE3**">BOE3** — Science-Based Open Elective</option>
-            <option value="BVE301">BVE301 — Human Values &amp; Ethics</option>
-            <option value="BAS301">BAS301 — Technical Communication</option>
-            <option value="BCC301">BCC301 — Cyber Security</option>
-            <option value="BCC302">BCC302 — Python Programming</option>
-          </optgroup>
-          <optgroup label="AKTU 2nd Year • Semester IV">
-            <option value="BCS401">BCS401 — Operating System</option>
-            <option value="BCS402">BCS402 — Automata &amp; Formal Languages</option>
-            <option value="BCS403">BCS403 — OOP with Java</option>
-            <option value="BAS403">BAS403 — Mathematics III, IV or V</option>
-            <option value="BOE4**">BOE4** — Science-Based Open Elective</option>
-            <option value="BAS401">BAS401 — Technical Communication</option>
-            <option value="BVE401">BVE401 — Human Values &amp; Ethics</option>
-            <option value="BCC402">BCC402 — Python Programming</option>
-            <option value="BCC401">BCC401 — Cyber Security</option>
-          </optgroup>
-          <optgroup label="AKTU 1st Year • Semesters I &amp; II">
-            <option value="ACS101">ACS101 — Programming Languages</option>
-            <option value="ACS201">ACS201 — Essentials of Data Structures</option>
-            <option value="AAS103D">AAS103D — Calculus &amp; Linear Algebra</option>
-            <option value="AAS203D">AAS203D — Numerical Methods</option>
-            <option value="AAS101E">AAS101E / AAS201E — Quantum Physics</option>
-            <option value="AAS102D">AAS102D / AAS202D — Applied Chemistry</option>
-            <option value="AAI101">AAI101 / AAI201 — AI &amp; Prompt Engineering</option>
-            <option value="AEE101A">AEE101A / AEE201A — Electrical Eng</option>
-            <option value="AEC101A">AEC101A / AEC201A — Electronics Eng</option>
-            <option value="AME101A">AME101A / AME201A — Mechanical Eng</option>
-            <option value="AAS105">AAS105 / AAS205 — Professional Communication</option>
-            <option value="AAS104">AAS104 / AAS204 — Indian Knowledge System</option>
-          </optgroup>
-          <optgroup label="Skills &amp; Engineering Domains">
-            <option value="DSA">Data Structures &amp; Algorithms</option>
-            <option value="Frontend">Frontend Web Development</option>
-            <option value="Backend">Backend &amp; Cloud Databases</option>
-            <option value="General">General / Self Study</option>
-          </optgroup>
-        </select>
+      <!-- Auto-detected subject display -->
+      <div id="popup-detected-row" class="subject-row" style="background:var(--color-surface); border:1px solid var(--color-border); border-radius:6px; padding:6px 10px; margin-bottom:12px;">
+        <span style="font-size:11px; color:var(--color-muted); white-space:nowrap;">Folder:</span>
+        <span id="popup-subject-name" style="font-size:11px; font-weight:600; color:var(--color-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Auto-detecting from title…</span>
       </div>
 
       <!-- Action buttons -->

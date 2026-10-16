@@ -3215,11 +3215,77 @@ export function getSubjectByCode(code, semester = null) {
   return null;
 }
 
+// Canonical subject alias and acronym dictionary for high-precision title matching
+const SUBJECT_TITLE_ALIASES = [
+  // Semester 3 (BCS-Series)
+  { code: 'BCS302', aliases: ['computer organization and architecture', 'computer organization', 'computer architecture', 'coa', 'co&a', 'cpu architecture'] },
+  { code: 'BCS303', aliases: ['discrete structures and theory of logic', 'discrete structures', 'discrete mathematics', 'discrete math', 'discrete maths', 'dstl', 'theory of logic', 'boolean algebra', 'graph theory', 'relations and functions'] },
+  { code: 'BCS301', aliases: ['data structure', 'data structures', 'linked list', 'trees and graphs', 'stack and queue', 'sorting algorithms'] },
+  { code: 'BAS303', aliases: ['mathematics iii', 'mathematics 3', 'maths iii', 'maths 3', 'math 3', 'math iii', 'bas303'] },
+  { code: 'BOE3**', aliases: ['science-based open elective', 'science based open elective', 'boe3'] },
+  { code: 'BVE301', aliases: ['universal human values', 'human values', 'professional ethics', 'uhv', 'bve301'] },
+  { code: 'BAS301', aliases: ['technical communication', 'bas301'] },
+  { code: 'BCC301', aliases: ['cyber security', 'cybersecurity', 'bcc301', 'information security'] },
+  { code: 'BCC302', aliases: ['python programming', 'python syntax', 'bcc302'] },
+  { code: 'BCS353', aliases: ['web designing workshop', 'web design workshop', 'bcs353'] },
+
+  // Semester 4 (BCS-Series)
+  { code: 'BCS401', aliases: ['operating system', 'operating systems', 'bcs401', 'cpu scheduling', 'deadlock', 'virtual memory', 'process synchronization'] },
+  { code: 'BCS402', aliases: ['theory of automata and formal languages', 'theory of automata', 'automata and formal languages', 'automata theory', 'tafl', 'toc', 'bcs402', 'theory of computation', 'turing machine', 'finite automata', 'cfg', 'pda'] },
+  { code: 'BCS403', aliases: ['object-oriented programming with java', 'oop with java', 'oops with java', 'java programming', 'bcs403', 'java oops', 'core java'] },
+  { code: 'BAS403', aliases: ['mathematics iv', 'mathematics 4', 'maths iv', 'maths 4', 'math 4', 'math iv', 'bas403'] },
+  { code: 'BOE4**', aliases: ['science-based open elective', 'boe4'] },
+  { code: 'BAS401', aliases: ['technical communication', 'bas401'] },
+  { code: 'BVE401', aliases: ['universal human values and professional ethics', 'human values', 'bve401'] },
+  { code: 'BCC402', aliases: ['python programming', 'bcc402'] },
+  { code: 'BCC401', aliases: ['cyber security', 'bcc401'] },
+
+  // Semester 1 & 2 (2026–27 CSE Stream)
+  { code: 'AAS101E', aliases: ['quantum physics', 'applied physics', 'modern physics', 'aas101e', 'aas201e'] },
+  { code: 'AAS102D', aliases: ['applied chemistry', 'engineering chemistry', 'smart systems', 'aas102d', 'aas202d'] },
+  { code: 'AAS103D', aliases: ['calculus and linear algebra', 'calculus', 'linear algebra', 'aas103d', 'engineering mathematics 1', 'maths 1'] },
+  { code: 'AAS203D', aliases: ['numerical methods', 'aas203d', 'engineering mathematics 2', 'maths 2'] },
+  { code: 'AEE101A', aliases: ['electrical engineering', 'basic electrical', 'aee101a', 'aee201a', 'bee'] },
+  { code: 'AEC101A', aliases: ['electronics engineering', 'basic electronics', 'aec101a', 'aec201a'] },
+  { code: 'ACS101',  aliases: ['programming languages', 'c programming', 'programming in c', 'acs101'] },
+  { code: 'ACS201',  aliases: ['essentials of data structures', 'acs201'] },
+  { code: 'AAI101',  aliases: ['prompt engineering', 'artificial intelligence', 'aai101', 'aai201', 'generative ai'] },
+  { code: 'AME101A', aliases: ['mechanical engineering', 'basic mechanical', 'ame101a', 'ame201a'] },
+  { code: 'AAS105',  aliases: ['professional communication and technical writing', 'professional communication', 'technical writing', 'aas105', 'aas205'] },
+  { code: 'AAS104',  aliases: ['indian knowledge system', 'iks', 'aas104', 'aas204'] }
+];
+
 // Helper: Conservative match between video title and canonical subjects
 export function matchSubjectFromTitle(title, preferredSemester = null) {
   if (!title) return null;
   const lower = title.toLowerCase();
 
+  // 1. High-priority alias and acronym check (e.g. "COA", "Discrete Mathematics", "DSTL", "TOC")
+  for (const item of SUBJECT_TITLE_ALIASES) {
+    for (const alias of item.aliases) {
+      // Use regex word boundary check if alias is short (<= 4 chars like "coa", "dstl", "toc", "os")
+      let isMatch = false;
+      if (alias.length <= 4) {
+        const regex = new RegExp(`\\b${alias.replace(/[*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+        isMatch = regex.test(lower);
+      } else {
+        isMatch = lower.includes(alias);
+      }
+
+      if (isMatch) {
+        const canonical = getSubjectByCode(item.code, preferredSemester);
+        if (canonical) {
+          return {
+            subject: canonical,
+            semester: canonical.semester || preferredSemester || 3,
+            matchType: 'alias'
+          };
+        }
+      }
+    }
+  }
+
+  // 2. Direct Subject Code check & keyword matching across semesters
   const semestersToCheck = preferredSemester && SYLLABUS[preferredSemester]
     ? [preferredSemester, 1, 2, 3, 4]
     : [3, 4, 1, 2];
@@ -3231,13 +3297,13 @@ export function matchSubjectFromTitle(title, preferredSemester = null) {
 
     const subjects = SYLLABUS[sem] || [];
     for (const sub of subjects) {
-      // 1. Exact code check (e.g. BCS301, AAS101E, etc.)
+      // Exact code check (e.g. BCS301, AAS101E, etc.)
       const codeClean = sub.code.replace(/[^A-Za-z0-9]/g, '').toLowerCase();
       if (codeClean && lower.includes(codeClean)) {
         return { subject: sub, semester: sem, matchType: 'code' };
       }
 
-      // 2. High-confidence keywords check
+      // Keyword check
       const nameWords = sub.name.toLowerCase().split(/\s+/).filter(w => w.length > 3 && !['and', 'with', 'for', 'the', 'from', 'introduction'].includes(w));
       if (nameWords.length > 0) {
         const matchesAllKeyWords = nameWords.length >= 2

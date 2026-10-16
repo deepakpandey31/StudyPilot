@@ -231,11 +231,14 @@ function getBookmarkFolder(bm) {
   // AKTU domain:
   const currentSem = parseInt(localStorage.getItem('studypilot_current_semester') || '3', 10);
   if (bm.subject) {
+    if (bm.subject.includes('—') || bm.subject.includes(' - ')) {
+      return bm.subject;
+    }
     const canonical = getSubjectByCode(bm.subject, currentSem);
     if (canonical) return `${canonical.code} — ${canonical.name}`;
     return bm.subject;
   }
-  // Conservative match by title
+  // Conservative match by title using canonical aliases
   const match = matchSubjectFromTitle(bm.title, currentSem);
   if (match) {
     return `${match.subject.code} — ${match.subject.name}`;
@@ -335,7 +338,7 @@ function renderBookmarks(list) {
           </div>
           <div class="bookmark-actions">
             <a href="${escapeHtml(watchUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="flex:1; text-align:center; text-decoration:none;">
-              ${timeFormatted ? `▶ Jump to ${escapeHtml(timeFormatted)}` : '▶ Watch Video'}
+              ${timeFormatted ? '▶ Jump to Video' : '▶ Watch Video'}
             </a>
             <button class="btn btn-ghost btn-sm" onclick="window.removeBookmark('${escapeHtml(bm.id)}')" title="Delete bookmark" aria-label="Delete bookmark">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
@@ -461,6 +464,10 @@ window.addBookmark = async function(event) {
   const bookmarkId = `bm_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
   const userUid = currentUser?.uid || localStorage.getItem('studypilot_user_uid') || 'local_user';
 
+  const currentSem = parseInt(localStorage.getItem('studypilot_current_semester') || '3', 10);
+  const autoMatch = (!subject && domainId === 'aktu') ? matchSubjectFromTitle(title, currentSem) : null;
+  const resolvedSubject = subject || (autoMatch ? `${autoMatch.subject.code} — ${autoMatch.subject.name}` : '');
+
   const newBookmark = {
     id:                 bookmarkId,
     userId:             userUid,
@@ -472,7 +479,7 @@ window.addBookmark = async function(event) {
     timestampFormatted: timestampFormatted || (timestampSeconds > 0 ? formatTimestampSec(timestampSeconds) : ''),
     domainId:           domainId,
     category:           category,
-    subject:            subject,
+    subject:            resolvedSubject,
     createdAt:          new Date().toISOString()
   };
 
