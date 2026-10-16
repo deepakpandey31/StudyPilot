@@ -102,20 +102,60 @@ window.addEventListener('studypilot-extension-synced', async (e) => {
 });
 
 // ─── CACHE-FIRST BOOKMARK LOADING ─────────────────────────────
+// ─── CANONICAL BOOKMARK DEDUPLICATION HELPER ───────────────────
+function getBookmarkDedupeKey(b) {
+  if (!b) return '';
+  let vid = b.videoId || '';
+  if (!vid && b.url) {
+    const match = b.url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+    if (match) vid = match[1];
+  }
+  if (!vid && b.id) {
+    // Strip user UID prefix if present: e.g. "uid_videoId_timestamp" -> "videoId"
+    const cleaned = b.id.replace(/^[a-zA-Z0-9_-]{20,}_/, '');
+    const parts = cleaned.split('_');
+    vid = parts[0] || b.id;
+  }
+  const time = Math.floor(b.timestamp || 0);
+  return `${vid}_${time}`;
+}
+
+// ─── CACHE-FIRST BOOKMARK LOADING ─────────────────────────────
 function loadBookmarksFromCache() {
   const mergedMap = new Map();
+
+  const addOrMerge = (b) => {
+    if (!b) return;
+    const dedupeKey = getBookmarkDedupeKey(b);
+    if (!dedupeKey) return;
+
+    if (!mergedMap.has(dedupeKey)) {
+      mergedMap.set(dedupeKey, {
+        ...b,
+        id: b.id || dedupeKey,
+        domainId: b.domainId || currentDomainId || 'aktu',
+        category: b.category || 'important'
+      });
+    } else {
+      const existing = mergedMap.get(dedupeKey);
+      mergedMap.set(dedupeKey, {
+        ...existing,
+        ...b,
+        id: existing.id || b.id || dedupeKey,
+        title: (b.title && b.title !== 'Untitled') ? b.title : existing.title,
+        thumbnailUrl: b.thumbnailUrl || existing.thumbnailUrl,
+        subject: b.subject || existing.subject,
+        channel: b.channel || existing.channel
+      });
+    }
+  };
 
   // 1. Read locally added bookmarks
   try {
     const rawLocal = localStorage.getItem('studypilot_local_bookmarks');
     if (rawLocal) {
       const list = JSON.parse(rawLocal);
-      if (Array.isArray(list)) {
-        list.forEach(b => {
-          const key = b.id || `${b.videoId}_${b.timestamp}`;
-          mergedMap.set(key, b);
-        });
-      }
+      if (Array.isArray(list)) list.forEach(addOrMerge);
     }
   } catch (e) {}
 
@@ -124,18 +164,7 @@ function loadBookmarksFromCache() {
     const rawSynced = localStorage.getItem('studypilot_synced_bookmarks');
     if (rawSynced) {
       const map = JSON.parse(rawSynced);
-      Object.entries(map).forEach(([key, b]) => {
-        if (!b) return;
-        const uniqueKey = b.id || `${b.videoId || key}_${b.timestamp || 0}`;
-        if (!mergedMap.has(uniqueKey)) {
-          mergedMap.set(uniqueKey, {
-            id: uniqueKey,
-            ...b,
-            domainId: b.domainId || currentDomainId || 'aktu',
-            category: b.category || 'important'
-          });
-        }
-      });
+      Object.values(map).forEach(addOrMerge);
     }
   } catch (e) {}
 
@@ -161,21 +190,39 @@ async function loadBookmarksFromFirestore() {
 
     if (firestoreList.length > 0) {
       const mergedMap = new Map();
-      // Keep existing memory list
-      allBookmarks.forEach(b => {
-        const k = b.id || `${b.videoId}_${b.timestamp}`;
-        mergedMap.set(k, b);
-      });
-      // Merge firestore list
-      firestoreList.forEach(b => {
-        const k = b.id || `${b.videoId}_${b.timestamp}`;
-        mergedMap.set(k, b);
-      });
+
+      const addOrMerge = (b) => {
+        if (!b) return;
+        const dedupeKey = getBookmarkDedupeKey(b);
+        if (!dedupeKey) return;
+
+        if (!mergedMap.has(dedupeKey)) {
+          mergedMap.set(dedupeKey, {
+            ...b,
+            id: b.id || dedupeKey,
+            domainId: b.domainId || currentDomainId || 'aktu',
+            category: b.category || 'important'
+          });
+        } else {
+          const existing = mergedMap.get(dedupeKey);
+          mergedMap.set(dedupeKey, {
+            ...existing,
+            ...b,
+            id: b.id || existing.id || dedupeKey,
+            title: (b.title && b.title !== 'Untitled') ? b.title : existing.title,
+            thumbnailUrl: b.thumbnailUrl || existing.thumbnailUrl,
+            subject: b.subject || existing.subject,
+            channel: b.channel || existing.channel
+          });
+        }
+      };
+
+      allBookmarks.forEach(addOrMerge);
+      firestoreList.forEach(addOrMerge);
 
       allBookmarks = Array.from(mergedMap.values());
       sortBookmarks();
 
-      // Mirror to local cache
       try {
         localStorage.setItem('studypilot_local_bookmarks', JSON.stringify(allBookmarks));
       } catch (e) {}
@@ -197,13 +244,23 @@ function sortBookmarks() {
 
 // ─── FILTER AND RENDER ────────────────────────────────────────
 function filterAndRender() {
-  let filtered = allBookmarks.filter(bm => {
+  const seenDedupe = new Set();
+  let filtered = [];
+
+  allBookmarks.forEach(bm => {
+    // Deduplication safety check
+    const dedupeKey = getBookmarkDedupeKey(bm);
+    if (dedupeKey) {
+      if (seenDedupe.has(dedupeKey)) return;
+      seenDedupe.add(dedupeKey);
+    }
+
     // 1. Domain filter (default legacy bookmarks to 'aktu')
     const bmDomain = bm.domainId || 'aktu';
-    if (bmDomain !== currentDomainId) return false;
+    if (bmDomain !== currentDomainId) return;
 
     // 2. Category filter
-    if (activeCategory !== 'all' && bm.category !== activeCategory) return false;
+    if (activeCategory !== 'all' && bm.category !== activeCategory) return;
 
     // 3. Search query
     if (searchQuery) {
@@ -211,10 +268,10 @@ function filterAndRender() {
       const matchTitle   = (bm.title || '').toLowerCase().includes(q);
       const matchSubject = (bm.subject || '').toLowerCase().includes(q);
       const matchChannel = (bm.channel || '').toLowerCase().includes(q);
-      if (!matchTitle && !matchSubject && !matchChannel) return false;
+      if (!matchTitle && !matchSubject && !matchChannel) return;
     }
 
-    return true;
+    filtered.push(bm);
   });
 
   renderBookmarks(filtered);
@@ -526,17 +583,25 @@ window.addBookmark = async function(event) {
 window.removeBookmark = async function(id) {
   if (!confirm('Remove this bookmark?')) return;
 
+  const targetBm = allBookmarks.find(bm => bm.id === id);
+  const targetKey = targetBm ? getBookmarkDedupeKey(targetBm) : '';
+
   // 1. Remove from in-memory list
-  allBookmarks = allBookmarks.filter(bm => bm.id !== id);
+  allBookmarks = allBookmarks.filter(bm => bm.id !== id && (!targetKey || getBookmarkDedupeKey(bm) !== targetKey));
   filterAndRender();
 
   // 2. Remove from LocalStorage
   try {
-    const rawLocal = localStorage.getItem('studypilot_local_bookmarks');
-    if (rawLocal) {
-      let list = JSON.parse(rawLocal);
-      list = list.filter(bm => bm.id !== id);
-      localStorage.setItem('studypilot_local_bookmarks', JSON.stringify(list));
+    localStorage.setItem('studypilot_local_bookmarks', JSON.stringify(allBookmarks));
+    const rawSynced = localStorage.getItem('studypilot_synced_bookmarks');
+    if (rawSynced) {
+      const syncedMap = JSON.parse(rawSynced);
+      Object.keys(syncedMap).forEach(k => {
+        if (k === id || (targetKey && getBookmarkDedupeKey(syncedMap[k]) === targetKey)) {
+          delete syncedMap[k];
+        }
+      });
+      localStorage.setItem('studypilot_synced_bookmarks', JSON.stringify(syncedMap));
     }
   } catch (e) {}
 
@@ -547,6 +612,10 @@ window.removeBookmark = async function(id) {
     try {
       const docRef = doc(db, 'bookmarks', id.startsWith(currentUser.uid) ? id : `${currentUser.uid}_${id}`);
       await deleteDoc(docRef);
+      if (targetBm?.videoId) {
+        const altDocRef = doc(db, 'bookmarks', `${currentUser.uid}_${targetBm.videoId}_${Math.floor(targetBm.timestamp || 0)}`);
+        deleteDoc(altDocRef).catch(() => {});
+      }
     } catch (err) {
       console.warn('Could not remove from Firestore (removed locally):', err);
     }

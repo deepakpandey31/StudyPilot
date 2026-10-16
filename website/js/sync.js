@@ -230,13 +230,22 @@ export async function syncExtensionData(user, preloadedPayload = null) {
       batchCount++;
     });
 
-    // 2. Sync Dedicated Bookmarks Store
+    // 2. Sync Dedicated Bookmarks Store (strictly deduplicated by videoId + timestamp)
+    const seenDedupeKeys = new Set();
+    const cleanSyncedBookmarks = {};
+
     bmKeys.forEach(bId => {
       const b = bookmarks[bId];
       if (!b) return;
       const vid = b.videoId || bId;
       const timeSec = Math.floor(b.timestamp !== undefined ? b.timestamp : 0);
-      const docId = b.id ? `${user.uid}_${b.id}` : `${user.uid}_${vid}_${timeSec}`;
+      const dedupeKey = `${vid}_${timeSec}`;
+      if (seenDedupeKeys.has(dedupeKey)) return;
+      seenDedupeKeys.add(dedupeKey);
+
+      cleanSyncedBookmarks[dedupeKey] = { ...b, id: dedupeKey, videoId: vid, timestamp: timeSec };
+
+      const docId = `${user.uid}_${dedupeKey}`;
       const bmRef = doc(db, 'bookmarks', docId);
 
       let timeFormatted = b.timestampFormatted;
@@ -254,7 +263,7 @@ export async function syncExtensionData(user, preloadedPayload = null) {
 
       batch.set(bmRef, {
         userId:             user.uid,
-        bookmarkId:         b.id || `${vid}_${timeSec}`,
+        bookmarkId:         dedupeKey,
         videoId:            vid,
         title:              b.title         || 'Untitled',
         thumbnailUrl:       b.thumbnailUrl  || '',
@@ -273,7 +282,7 @@ export async function syncExtensionData(user, preloadedPayload = null) {
     // Save to LocalStorage immediately for instant UI availability & resilience
     try {
       localStorage.setItem('studypilot_synced_videos', JSON.stringify(videos));
-      localStorage.setItem('studypilot_synced_bookmarks', JSON.stringify(bookmarks));
+      localStorage.setItem('studypilot_synced_bookmarks', JSON.stringify(cleanSyncedBookmarks));
       if (response.todayMinutes !== undefined) {
         localStorage.setItem('studypilot_today_minutes', String(response.todayMinutes));
       }

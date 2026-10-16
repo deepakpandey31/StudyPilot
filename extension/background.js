@@ -294,8 +294,10 @@ async function markBookmarked(payload) {
     createdAt:          Date.now()
   };
 
-  // Also maintain backward-compatible video key
-  bookmarks[videoId] = bookmarks[bookmarkKey];
+  // Clean up any old duplicate single-key entry for this video
+  if (bookmarks[videoId] && bookmarks[videoId] !== bookmarks[bookmarkKey]) {
+    delete bookmarks[videoId];
+  }
 
   await chrome.storage.local.set({ videos, bookmarks });
 }
