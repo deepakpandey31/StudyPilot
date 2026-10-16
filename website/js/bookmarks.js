@@ -287,7 +287,7 @@ function getBookmarkFolder(bm) {
   }
   // AKTU domain:
   const currentSem = parseInt(localStorage.getItem('studypilot_current_semester') || '3', 10);
-  if (bm.subject) {
+  if (bm.subject && bm.subject !== 'Uncategorized' && bm.subject !== 'General' && bm.subject !== 'General / Self Study') {
     if (bm.subject.includes('—') || bm.subject.includes(' - ')) {
       return bm.subject;
     }
@@ -295,7 +295,7 @@ function getBookmarkFolder(bm) {
     if (canonical) return `${canonical.code} — ${canonical.name}`;
     return bm.subject;
   }
-  // Conservative match by title using canonical aliases
+  // Match by title using canonical aliases (Matrices, Maths, Discrete, COA, etc.)
   const match = matchSubjectFromTitle(bm.title, currentSem);
   if (match) {
     return `${match.subject.code} — ${match.subject.name}`;
