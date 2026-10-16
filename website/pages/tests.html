@@ -50,6 +50,55 @@
       }
     }
 
+    /* ── TOPIC CHECKBOXES LIST ──────────────────────────── */
+    #topic-checkboxes-list {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      padding: 6px;
+      background: var(--color-bg);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .topic-checkbox-item {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: flex-start !important;
+      gap: 10px !important;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      transition: background 0.15s ease;
+      user-select: none;
+      margin: 0 !important;
+      width: 100%;
+    }
+    .topic-checkbox-item:hover {
+      background: var(--color-surface);
+    }
+    .topic-checkbox-item input[type="checkbox"] {
+      width: 16px !important;
+      min-width: 16px !important;
+      max-width: 16px !important;
+      height: 16px !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      accent-color: var(--color-primary);
+      cursor: pointer;
+      flex-shrink: 0 !important;
+    }
+    .topic-checkbox-item .topic-name-text {
+      font-size: 13px !important;
+      font-weight: 500;
+      color: var(--color-text);
+      line-height: 1.4;
+      flex: 1 !important;
+      text-align: left !important;
+      margin: 0 !important;
+    }
+
     /* ── MCQ QUESTION CARD ──────────────────────────────── */
     .question-card {
       background: var(--color-surface);
@@ -284,8 +333,8 @@
               <button type="button" class="btn btn-ghost btn-xs" style="padding:2px 8px; font-size:11px;" onclick="selectAllTopics(false)">Clear</button>
             </div>
           </div>
-          <div id="topic-checkboxes-list" style="max-height:160px; overflow-y:auto; border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:8px 12px; background:var(--color-bg); font-size:var(--font-size-sm); display:flex; flex-direction:column; gap:6px;">
-            <span class="text-muted text-xs">Select a subject to view topics</span>
+          <div id="topic-checkboxes-list">
+            <span class="text-muted text-xs" style="padding:6px 8px;">Select a subject to view topics</span>
           </div>
         </div>
 
@@ -386,6 +435,6 @@
 
 <div id="toast-container"></div>
 <script src="../js/ui-helpers.js"></script>
-<script type="module" src="../js/tests.js?v=20261016_v4"></script>
+<script type="module" src="../js/tests.js?v=20261016_v5"></script>
 </body>
 </html>

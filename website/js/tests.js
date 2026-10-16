@@ -391,9 +391,9 @@ function updateTopicCheckboxes() {
   }
 
   container.innerHTML = topics.map((t) => `
-    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:2px 0;">
-      <input type="checkbox" class="mode-a-topic-check" value="${escapeHtml(t.name)}" style="accent-color:var(--color-primary);" />
-      <span style="font-size:13px; color:var(--color-text);">${escapeHtml(t.name)}</span>
+    <label class="topic-checkbox-item">
+      <input type="checkbox" class="mode-a-topic-check" value="${escapeHtml(t.name)}" />
+      <span class="topic-name-text">${escapeHtml(t.name)}</span>
     </label>
   `).join('');
 
