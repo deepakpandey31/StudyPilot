@@ -43,23 +43,57 @@ onAuthStateChanged(auth, async (user) => {
   renderUserInfo(user);
 
   // 1. Load user profile & semester
-  const profileRef = doc(db, 'users', user.uid);
-  const snap       = await getDoc(profileRef);
-  if (snap.exists() && snap.data().semester) {
-    currentSemester = parseInt(snap.data().semester, 10);
-  }
+  try {
+    const cachedSem = localStorage.getItem('studypilot_current_semester');
+    if (cachedSem) currentSemester = parseInt(cachedSem, 10);
+  } catch (e) {}
 
-  // 2. Pre-fill Mode A subjects
-  const subjects = SYLLABUS[currentSemester] || SYLLABUS[3] || [];
-  if (subjects.length > 0) {
-    subjects.forEach(sub => addSubjectRow(sub.name, sub.credits));
-  } else {
-    for (let i = 0; i < 4; i++) addSubjectRow();
-  }
+  try {
+    const profileRef = doc(db, 'users', user.uid);
+    const snap       = await getDoc(profileRef);
+    if (snap.exists() && snap.data().semester) {
+      currentSemester = parseInt(snap.data().semester, 10);
+      try { localStorage.setItem('studypilot_current_semester', String(currentSemester)); } catch (e) {}
+    }
+  } catch (e) {}
+
+  if (currentSemester < 1 || currentSemester > 4) currentSemester = 3;
+
+  const semSelect = document.getElementById('sgpa-semester-select');
+  if (semSelect) semSelect.value = String(currentSemester);
+
+  // 2. Pre-fill Mode A subjects from canonical syllabus
+  populateSemesterSubjects(currentSemester);
 
   // 3. Load empirical data for Mode B
   await loadModeBMetrics();
 });
+
+// ─── POPULATE SUBJECTS FROM CANONICAL DATA ────────────────────
+function populateSemesterSubjects(sem) {
+  const tbody = document.getElementById('subjects-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  rowCount = 0;
+
+  const subjects = SYLLABUS[sem] || SYLLABUS[3] || [];
+  if (subjects.length > 0) {
+    subjects.forEach(sub => {
+      // Display canonical subject with code and name
+      const displayName = sub.code ? `[${sub.code}] ${sub.name}` : sub.name;
+      addSubjectRow(displayName, sub.credits, sub.isNonCredit || sub.credits === 0);
+    });
+  } else {
+    for (let i = 0; i < 4; i++) addSubjectRow();
+  }
+}
+
+window.changeSGPASemester = async function(newSem) {
+  currentSemester = parseInt(newSem, 10);
+  populateSemesterSubjects(currentSemester);
+  await loadModeBMetrics();
+  showToast(`Loaded canonical subjects for Semester ${currentSemester}`, 'info');
+};
 
 // ─── MODE SWITCHER ────────────────────────────────────────────
 window.switchSGPAMode = function(mode) {
@@ -82,7 +116,7 @@ window.switchSGPAMode = function(mode) {
 };
 
 // ─── MODE A: ADD SUBJECT ROW ──────────────────────────────────
-window.addSubjectRow = function(name = '', credits = 4) {
+window.addSubjectRow = function(name = '', credits = 4, isNC = false) {
   const tbody = document.getElementById('subjects-tbody');
   if (!tbody) return;
 
@@ -91,14 +125,16 @@ window.addSubjectRow = function(name = '', credits = 4) {
 
   const row = document.createElement('tr');
   row.id    = `row-${id}`;
+  row.dataset.isNc = isNC ? 'true' : 'false';
   row.innerHTML = `
     <td>
       <input type="text" id="subj-name-${id}" value="${escapeHtml(name)}"
-             placeholder="Subject name" style="min-width:160px;" />
+             placeholder="Subject name" style="min-width:200px;" />
     </td>
     <td>
       <input type="number" id="subj-credits-${id}" value="${credits}"
-             min="1" max="8" placeholder="Credits" />
+             min="0" max="8" placeholder="Credits" ${isNC ? 'title="Non-credit (Audit) course — exempt from SGPA divisor"' : ''} />
+      ${isNC ? '<span class="text-xs text-muted" style="display:block; font-size:10px;">NC (Audit)</span>' : ''}
     </td>
     <td>
       <input type="number" id="subj-marks-${id}" value=""
@@ -164,8 +200,8 @@ window.calculateSGPA = function() {
     const credits = parseFloat(document.getElementById(`subj-credits-${id}`)?.value);
     const marks   = parseFloat(document.getElementById(`subj-marks-${id}`)?.value);
 
-    if (isNaN(credits) || credits <= 0) {
-      showToast(`Invalid credits for "${name}". Must be greater than 0.`, 'error');
+    if (isNaN(credits) || credits < 0) {
+      showToast(`Invalid credits for "${name}". Must be 0 or greater.`, 'error');
       hasError = true;
       return;
     }
@@ -177,23 +213,30 @@ window.calculateSGPA = function() {
     }
 
     const { grade, points } = getGradeInfo(marks);
-    const creditPoints      = credits * points;
+    const isNc = credits === 0;
+    const creditPoints = credits * points;
 
-    totalCredits      += credits;
-    totalCreditPoints += creditPoints;
+    if (!isNc) {
+      totalCredits      += credits;
+      totalCreditPoints += creditPoints;
+    }
 
     breakdownHtml += `
       <tr>
         <td style="text-align:left; font-weight:500;">${escapeHtml(name)}</td>
-        <td>${credits}</td>
+        <td>${credits === 0 ? '0 (NC)' : credits}</td>
         <td>${marks}%</td>
         <td><strong>${grade}</strong></td>
         <td>${points}</td>
-        <td style="font-weight:600;">${creditPoints}</td>
+        <td style="font-weight:600;">${credits === 0 ? '— (Audit)' : creditPoints}</td>
       </tr>`;
   });
 
-  if (hasError || totalCredits === 0) return;
+  if (hasError) return;
+  if (totalCredits === 0) {
+    showToast('Add at least one credit-bearing course to calculate SGPA.', 'error');
+    return;
+  }
 
   const rawSGPA = totalCreditPoints / totalCredits;
   const sgpa    = rawSGPA.toFixed(2);

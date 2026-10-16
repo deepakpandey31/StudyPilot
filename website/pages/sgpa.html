@@ -136,14 +136,29 @@
     </header>
 
     <div class="page-body">
-      <!-- Mode Tabs -->
-      <div style="display:flex; gap:8px; margin-bottom:var(--sp-4);">
-        <button class="btn btn-primary btn-sm" id="btn-sgpa-mode-a" onclick="switchSGPAMode('A')">
-          Mode A: Manual SGPA Calculator
-        </button>
-        <button class="btn btn-ghost btn-sm" id="btn-sgpa-mode-b" onclick="switchSGPAMode('B')">
-          Mode B: Progress-Based Academic Estimator
-        </button>
+      <!-- Mode Tabs & Semester Selector -->
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:var(--sp-4);">
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-primary btn-sm" id="btn-sgpa-mode-a" onclick="switchSGPAMode('A')">
+            Mode A: Manual SGPA Calculator
+          </button>
+          <button class="btn btn-ghost btn-sm" id="btn-sgpa-mode-b" onclick="switchSGPAMode('B')">
+            Mode B: Progress-Based Academic Estimator
+          </button>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <label for="sgpa-semester-select" style="font-size:12px; font-weight:600; color:var(--color-text-muted);">Curriculum Semester:</label>
+          <select id="sgpa-semester-select" class="form-input" style="padding:4px 10px; font-size:12px; width:auto;" onchange="changeSGPASemester(this.value)">
+            <optgroup label="First Year (2026–27 CSE Stream)">
+              <option value="1">Semester 1</option>
+              <option value="2">Semester 2</option>
+            </optgroup>
+            <optgroup label="Second Year (BCS-Series CSE)">
+              <option value="3" selected>Semester 3</option>
+              <option value="4">Semester 4</option>
+            </optgroup>
+          </select>
+        </div>
       </div>
 
       <!-- Disclaimer -->

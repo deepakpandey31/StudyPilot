@@ -61,24 +61,23 @@
           <div class="form-group">
             <label for="set-branch">Branch</label>
             <select id="set-branch">
-              <option value="CSE">Computer Science and Engineering (CSE)</option>
-              <option value="IT">Information Technology (IT)</option>
-              <option value="ECE">Electronics and Communication (ECE)</option>
-              <option value="ME">Mechanical Engineering (ME)</option>
-              <option value="CE">Civil Engineering (CE)</option>
+              <option value="CSE" selected>Computer Science &amp; Engineering (CSE)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="set-year">Academic Year</label>
+            <select id="set-year" onchange="window.handleSettingsYearChange(this.value)">
+              <option value="1">First Year (2026–27 CSE Stream)</option>
+              <option value="2" selected>Second Year (BCS-Series CSE)</option>
             </select>
           </div>
           <div class="form-group">
             <label for="set-semester">Current Semester</label>
             <select id="set-semester">
-              <option value="1">Semester 1</option>
-              <option value="2">Semester 2</option>
-              <option value="3">Semester 3</option>
-              <option value="4">Semester 4</option>
-              <option value="5">Semester 5</option>
-              <option value="6">Semester 6</option>
-              <option value="7">Semester 7</option>
-              <option value="8">Semester 8</option>
+              <option value="1" class="set-sem-yr1" style="display:none;">Semester 1 (First Year)</option>
+              <option value="2" class="set-sem-yr1" style="display:none;">Semester 2 (First Year)</option>
+              <option value="3" class="set-sem-yr2">Semester 3 (Second Year)</option>
+              <option value="4" class="set-sem-yr2">Semester 4 (Second Year)</option>
             </select>
           </div>
           <div class="form-group">

@@ -18,6 +18,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { DomainManager, getActiveDomainId, getActiveDomain } from './domain-manager.js';
 import { syncExtensionData, updateExtensionBadge, requestExtensionData } from './sync.js';
+import { matchSubjectFromTitle, getSubjectByCode } from './syllabus-data.js?v=20261016_v5';
 
 let currentUser     = null;
 let currentDomainId = getActiveDomainId() || 'aktu';
@@ -219,14 +220,37 @@ function filterAndRender() {
   renderBookmarks(filtered);
 }
 
-// ─── RENDER BOOKMARKS ─────────────────────────────────────────
+// ─── CANONICAL FOLDER CATEGORIZATION ─────────────────────────
+function getBookmarkFolder(bm) {
+  if (currentDomainId === 'dsa') {
+    return bm.subject || 'DSA Modules';
+  }
+  if (currentDomainId === 'webdev') {
+    return bm.subject || 'Web Development Topics';
+  }
+  // AKTU domain:
+  const currentSem = parseInt(localStorage.getItem('studypilot_current_semester') || '3', 10);
+  if (bm.subject) {
+    const canonical = getSubjectByCode(bm.subject, currentSem);
+    if (canonical) return `${canonical.code} — ${canonical.name}`;
+    return bm.subject;
+  }
+  // Conservative match by title
+  const match = matchSubjectFromTitle(bm.title, currentSem);
+  if (match) {
+    return `${match.subject.code} — ${match.subject.name}`;
+  }
+  return 'Uncategorized';
+}
+
+// ─── RENDER BOOKMARKS (GROUPED BY SUBJECT FOLDERS) ────────────
 function renderBookmarks(list) {
-  const gridEl  = document.getElementById('bookmarks-grid');
-  const emptyEl = document.getElementById('bookmarks-empty');
-  if (!gridEl) return;
+  const containerEl = document.getElementById('bookmarks-grid');
+  const emptyEl     = document.getElementById('bookmarks-empty');
+  if (!containerEl) return;
 
   if (list.length === 0) {
-    gridEl.innerHTML = '';
+    containerEl.innerHTML = '';
     if (emptyEl) {
       emptyEl.classList.remove('hidden');
       const domain = DomainManager.getActiveDomain ? DomainManager.getActiveDomain() : { name: 'this domain' };
@@ -238,65 +262,96 @@ function renderBookmarks(list) {
 
   if (emptyEl) emptyEl.classList.add('hidden');
 
-  let html = '';
+  // Group by Subject Folders
+  const folderMap = new Map();
   list.forEach(bm => {
-    const thumb = bm.thumbnailUrl
-      ? `<img src="${escapeHtml(bm.thumbnailUrl)}" alt="Video thumbnail" loading="lazy" />`
-      : `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>`;
-
-    const categoryMap = {
-      important: { label: 'Important', badge: 'badge-red' },
-      revision:  { label: 'Revision',  badge: 'badge-blue' },
-      difficult: { label: 'Difficult Topic', badge: 'badge-yellow' },
-      doubt:     { label: 'Doubt',     badge: 'badge-gray' }
-    };
-
-    const catInfo = categoryMap[bm.category] || { label: bm.category || 'Bookmark', badge: 'badge-gray' };
-
-    // Format timestamp string & jump URL
-    const sec = Math.floor(bm.timestamp || 0);
-    const timeFormatted = bm.timestampFormatted || (sec > 0 ? formatTimestampSec(sec) : '');
-
-    let watchUrl = bm.url || (bm.videoId ? `https://youtube.com/watch?v=${bm.videoId}` : '#');
-    if (watchUrl.includes('youtube.com') && sec > 0 && !watchUrl.includes('&t=') && !watchUrl.includes('?t=')) {
-      watchUrl = watchUrl.includes('?') ? `${watchUrl}&t=${sec}s` : `${watchUrl}?t=${sec}s`;
+    const folder = getBookmarkFolder(bm);
+    if (!folderMap.has(folder)) {
+      folderMap.set(folder, []);
     }
+    folderMap.get(folder).push(bm);
+  });
 
-    const dateStr = bm.createdAt?.toDate
-      ? bm.createdAt.toDate().toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })
-      : (bm.createdAt ? new Date(bm.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Saved');
+  const categoryMap = {
+    important: { label: 'Important', badge: 'badge-red' },
+    revision:  { label: 'Revision',  badge: 'badge-blue' },
+    difficult: { label: 'Difficult Topic', badge: 'badge-yellow' },
+    doubt:     { label: 'Doubt',     badge: 'badge-gray' }
+  };
+
+  let html = '';
+
+  folderMap.forEach((items, folderName) => {
+    html += `
+      <div class="bookmark-folder-section">
+        <div class="bookmark-folder-header">
+          <div class="bookmark-folder-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-primary);"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <span>${escapeHtml(folderName)}</span>
+          </div>
+          <span class="badge badge-purple" style="font-size:11px;">${items.length} ${items.length === 1 ? 'bookmark' : 'bookmarks'}</span>
+        </div>
+
+        <div class="bookmarks-grid">
+    `;
+
+    items.forEach(bm => {
+      const thumb = bm.thumbnailUrl
+        ? `<img src="${escapeHtml(bm.thumbnailUrl)}" alt="Video thumbnail" loading="lazy" />`
+        : `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>`;
+
+      const catInfo = categoryMap[bm.category] || { label: bm.category || 'Bookmark', badge: 'badge-gray' };
+
+      // Format timestamp string & jump URL (direct YouTube jump at saved timestamp)
+      const sec = Math.floor(bm.timestamp || 0);
+      const timeFormatted = bm.timestampFormatted || (sec > 0 ? formatTimestampSec(sec) : '');
+
+      let watchUrl = bm.url || (bm.videoId ? `https://youtube.com/watch?v=${bm.videoId}` : '#');
+      if (watchUrl.includes('youtube.com') && sec > 0 && !watchUrl.includes('&t=') && !watchUrl.includes('?t=')) {
+        watchUrl = watchUrl.includes('?') ? `${watchUrl}&t=${sec}s` : `${watchUrl}?t=${sec}s`;
+      }
+
+      const dateStr = bm.createdAt?.toDate
+        ? bm.createdAt.toDate().toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })
+        : (bm.createdAt ? new Date(bm.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Saved');
+
+      html += `
+        <div class="bookmark-card">
+          <a href="${escapeHtml(watchUrl)}" target="_blank" rel="noopener noreferrer" class="bookmark-thumb" title="Jump to ${timeFormatted || 'video'} on YouTube">
+            ${thumb}
+          </a>
+          <div class="bookmark-title" title="${escapeHtml(bm.title || 'Untitled Bookmark')}">
+            ${escapeHtml(bm.title || 'Untitled Bookmark')}
+          </div>
+          <div class="bookmark-meta">
+            <span class="badge ${catInfo.badge}">${escapeHtml(catInfo.label)}</span>
+            ${timeFormatted ? `
+              <a href="${escapeHtml(watchUrl)}" target="_blank" rel="noopener noreferrer" class="badge badge-purple" title="Click to jump to exact timestamp" style="text-decoration:none; display:inline-flex; align-items:center; gap:3px;">
+                ⏱ ${escapeHtml(timeFormatted)}
+              </a>
+            ` : ''}
+            <span style="color:var(--color-text-muted); font-size:11px;">${escapeHtml(bm.channel || 'Lecture')}</span>
+            <span style="color:var(--color-text-muted); font-size:11px; margin-left:auto;">${dateStr}</span>
+          </div>
+          <div class="bookmark-actions">
+            <a href="${escapeHtml(watchUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="flex:1; text-align:center; text-decoration:none;">
+              ${timeFormatted ? `▶ Jump to ${escapeHtml(timeFormatted)}` : '▶ Watch Video'}
+            </a>
+            <button class="btn btn-ghost btn-sm" onclick="window.removeBookmark('${escapeHtml(bm.id)}')" title="Delete bookmark" aria-label="Delete bookmark">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          </div>
+        </div>
+      `;
+    });
 
     html += `
-      <div class="bookmark-card">
-        <a href="${escapeHtml(watchUrl)}" target="_blank" rel="noopener noreferrer" class="bookmark-thumb" title="Jump to ${timeFormatted || 'video'} on YouTube">
-          ${thumb}
-        </a>
-        <div class="bookmark-title" title="${escapeHtml(bm.title || 'Untitled Bookmark')}">
-          ${escapeHtml(bm.title || 'Untitled Bookmark')}
-        </div>
-        <div class="bookmark-meta">
-          <span class="badge ${catInfo.badge}">${escapeHtml(catInfo.label)}</span>
-          ${timeFormatted ? `
-            <a href="${escapeHtml(watchUrl)}" target="_blank" rel="noopener noreferrer" class="badge badge-purple" title="Click to jump to exact timestamp" style="text-decoration:none; display:inline-flex; align-items:center; gap:3px;">
-              ⏱ ${escapeHtml(timeFormatted)}
-            </a>
-          ` : ''}
-          <span style="color:var(--color-text-muted); font-size:11px;">${escapeHtml(bm.subject || 'General')}</span>
-          <span style="color:var(--color-text-muted); font-size:11px; margin-left:auto;">${dateStr}</span>
-        </div>
-        <div class="bookmark-actions">
-          <a href="${escapeHtml(watchUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="flex:1; text-align:center; text-decoration:none;">
-            ${timeFormatted ? `▶ Jump to ${escapeHtml(timeFormatted)}` : '▶ Watch Video'}
-          </a>
-          <button class="btn btn-ghost btn-sm" onclick="window.removeBookmark('${escapeHtml(bm.id)}')" title="Delete bookmark" aria-label="Delete bookmark">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-          </button>
         </div>
       </div>
     `;
   });
 
-  gridEl.innerHTML = html;
+  containerEl.innerHTML = html;
 }
 
 // ─── WINDOW EXPOSED ACTIONS ───────────────────────────────────

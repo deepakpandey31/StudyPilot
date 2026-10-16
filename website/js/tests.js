@@ -19,7 +19,7 @@ import {
   collection, addDoc, getDocs, query, where,
   serverTimestamp, doc, getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { SYLLABUS, getDomainRoadmap, getAllDomainTopics } from './syllabus-data.js?v=20261016_v4';
+import { SYLLABUS, getDomainRoadmap, getAllDomainTopics, matchSubjectFromTitle, getSubjectByCode } from './syllabus-data.js?v=20261016_v5';
 import { DomainManager } from './domain-manager.js?v=20261016_v4';
 
 const GEMINI_MODELS = [
@@ -287,27 +287,176 @@ async function syncProgressFromCloud() {
 }
 
 // ─── MODE SWITCHER ────────────────────────────────────────────
+let recentVideosList = [];
+let selectedModeCVideo = null;
+
 function switchTestMode(mode) {
   activeMode = mode;
   const btnA  = document.getElementById('btn-mode-a');
   const btnB  = document.getElementById('btn-mode-b');
+  const btnC  = document.getElementById('btn-mode-c');
   const cardA = document.getElementById('mode-a-card');
   const cardB = document.getElementById('mode-b-card');
+  const cardC = document.getElementById('mode-c-card');
 
   if (mode === 'A') {
     if (btnA) btnA.className = 'btn btn-primary btn-sm';
     if (btnB) btnB.className = 'btn btn-ghost btn-sm';
+    if (btnC) btnC.className = 'btn btn-ghost btn-sm';
     if (cardA) cardA.style.display = 'block';
     if (cardB) cardB.style.display = 'none';
-  } else {
+    if (cardC) cardC.style.display = 'none';
+  } else if (mode === 'B') {
     if (btnA) btnA.className = 'btn btn-ghost btn-sm';
     if (btnB) btnB.className = 'btn btn-primary btn-sm';
+    if (btnC) btnC.className = 'btn btn-ghost btn-sm';
     if (cardA) cardA.style.display = 'none';
     if (cardB) cardB.style.display = 'block';
+    if (cardC) cardC.style.display = 'none';
     populateModeBTopics();
+  } else if (mode === 'C') {
+    if (btnA) btnA.className = 'btn btn-ghost btn-sm';
+    if (btnB) btnB.className = 'btn btn-ghost btn-sm';
+    if (btnC) btnC.className = 'btn btn-primary btn-sm';
+    if (cardA) cardA.style.display = 'none';
+    if (cardB) cardB.style.display = 'none';
+    if (cardC) cardC.style.display = 'block';
+    populateModeCVideos();
   }
 }
 window.switchTestMode = switchTestMode;
+
+// ─── MODE C: RECENT VIDEO POPULATION ──────────────────────────
+async function populateModeCVideos() {
+  const selectEl = document.getElementById('mode-c-video-select');
+  if (!selectEl) return;
+
+  const videoMap = new Map();
+
+  // 1. Check local synced extension videos
+  try {
+    const raw = localStorage.getItem('studypilot_synced_videos');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      Object.entries(parsed).forEach(([k, v]) => {
+        if (v && v.title) videoMap.set(v.videoId || k, v);
+      });
+    }
+  } catch (e) {}
+
+  // 2. Check local bookmarks
+  try {
+    const rawBm = localStorage.getItem('studypilot_local_bookmarks');
+    if (rawBm) {
+      const parsedBm = JSON.parse(rawBm);
+      if (Array.isArray(parsedBm)) {
+        parsedBm.forEach(b => {
+          if (b.videoId && !videoMap.has(b.videoId)) {
+            videoMap.set(b.videoId, {
+              videoId: b.videoId,
+              title: b.title,
+              subject: b.subject,
+              channel: b.channel,
+              watchedSeconds: b.timestamp || 0
+            });
+          }
+        });
+      }
+    }
+  } catch (e) {}
+
+  recentVideosList = Array.from(videoMap.values());
+
+  if (recentVideosList.length === 0) {
+    selectEl.innerHTML = '<option value="">No recent YouTube study videos recorded yet</option>';
+    const titleEl = document.getElementById('mode-c-title');
+    const metaEl  = document.getElementById('mode-c-meta');
+    if (titleEl) titleEl.textContent = 'No Study Videos Tracked Yet';
+    if (metaEl)  metaEl.innerHTML = 'Watch AKTU CSE lecture videos using the StudyPilot extension, or bookmark them to generate video-specific tests.';
+    selectedModeCVideo = null;
+    return;
+  }
+
+  selectEl.innerHTML = recentVideosList.map((v, idx) => {
+    const title = v.title || 'Untitled Video';
+    const sub = v.subject ? `[${v.subject}] ` : '';
+    return `<option value="${escapeHtml(v.videoId)}">${escapeHtml(sub + title)}</option>`;
+  }).join('');
+
+  handleModeCVideoChange(recentVideosList[0].videoId);
+}
+window.populateModeCVideos = populateModeCVideos;
+
+window.handleModeCVideoChange = function(videoId) {
+  const video = recentVideosList.find(v => v.videoId === videoId) || recentVideosList[0];
+  selectedModeCVideo = video;
+  if (!video) return;
+
+  const titleEl = document.getElementById('mode-c-title');
+  const metaEl  = document.getElementById('mode-c-meta');
+
+  // Attempt conservative curriculum match
+  let mappedSubject = null;
+  let matchInfo = null;
+
+  if (video.subject) {
+    mappedSubject = getSubjectByCode(video.subject, currentSemester);
+  }
+  if (!mappedSubject) {
+    matchInfo = matchSubjectFromTitle(video.title, currentSemester);
+    if (matchInfo) mappedSubject = matchInfo.subject;
+  }
+
+  if (titleEl) titleEl.textContent = video.title || 'Selected Study Video';
+  if (metaEl) {
+    const channelStr = video.channel ? ` • Channel: ${video.channel}` : '';
+    const subjStr = mappedSubject ? ` • Mapped Subject: ${mappedSubject.code} — ${mappedSubject.name}` : ' • Curriculum: Uncategorized';
+    metaEl.textContent = `YouTube Video ID: ${video.videoId}${channelStr}${subjStr}`;
+  }
+};
+
+window.generateVideoTest = async function() {
+  if (!selectedModeCVideo) {
+    showToast('Please select a recent study video.', 'error');
+    return;
+  }
+
+  const numQ = parseInt(document.getElementById('test-num-q-c')?.value || '5', 10);
+  const btn  = document.getElementById('gen-video-test-btn');
+
+  // Find mapped subject and topics
+  let mappedSubject = null;
+  if (selectedModeCVideo.subject) {
+    mappedSubject = getSubjectByCode(selectedModeCVideo.subject, currentSemester);
+  }
+  if (!mappedSubject) {
+    const match = matchSubjectFromTitle(selectedModeCVideo.title, currentSemester);
+    if (match) mappedSubject = match.subject;
+  }
+
+  let topicNames = [];
+  if (mappedSubject) {
+    topicNames = (mappedSubject.units || []).flatMap(u => (u.topics || []).map(t => t.name));
+  } else {
+    // Fall back to current semester topics in canonical syllabus
+    const semTopics = SYLLABUS[currentSemester] || SYLLABUS[3];
+    topicNames = semTopics.flatMap(s => (s.units || []).flatMap(u => (u.topics || []).map(t => t.name))).slice(0, 8);
+  }
+
+  testSubject    = mappedSubject ? `${mappedSubject.name} (${mappedSubject.code})` : 'Recent Lecture Topic';
+  testUnit       = `Lecture: ${selectedModeCVideo.title.slice(0, 35)}…`;
+  testTopicsList = topicNames;
+
+  await runTestGeneration({
+    mode: 'video',
+    subjectName: testSubject,
+    unitName: testUnit,
+    topicNames: topicNames,
+    numQ: numQ,
+    btn: btn,
+    sourceDescription: `Recent video lecture: "${selectedModeCVideo.title}" mapped to canonical syllabus`
+  });
+};
 
 // ─── POPULATE SUBJECT DROPDOWN (MODE A) ────────────────────────
 function populateSubjectDropdown() {

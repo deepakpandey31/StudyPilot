@@ -360,14 +360,14 @@
       <div class="roadmap-toolbar">
         <div id="semester-select-container">
           <select id="semester-select" class="semester-select" onchange="changeSemester(this.value)" aria-label="Select semester">
-            <option value="1">Semester 1</option>
-            <option value="2">Semester 2</option>
-            <option value="3" selected>Semester 3</option>
-            <option value="4">Semester 4</option>
-            <option value="5">Semester 5</option>
-            <option value="6">Semester 6</option>
-            <option value="7">Semester 7</option>
-            <option value="8">Semester 8</option>
+            <optgroup label="First Year (2026–27 CSE Stream)">
+              <option value="1">Semester 1</option>
+              <option value="2">Semester 2</option>
+            </optgroup>
+            <optgroup label="Second Year (BCS-Series CSE)">
+              <option value="3" selected>Semester 3</option>
+              <option value="4">Semester 4</option>
+            </optgroup>
           </select>
         </div>
         <button class="btn btn-primary btn-sm" id="btn-add-subject" onclick="openSubjectModal()">
@@ -381,30 +381,121 @@
     </header>
 
     <div class="page-body">
-      <!-- Overall progress banner -->
-      <div class="overall-banner" id="overall-banner">
-        <div>
-          <div class="overall-banner-title" id="overall-banner-title">Overall Semester Progress</div>
-          <div class="text-muted text-sm" id="overall-topics-text">Loading…</div>
+      <!-- VIEW SWITCHER TABS -->
+      <div style="display:flex; gap:8px; margin-bottom:var(--sp-4);">
+        <button class="btn btn-primary btn-sm" id="btn-view-tree" onclick="switchRoadmapView('tree')">
+          📋 Syllabus Tree View
+        </button>
+        <button class="btn btn-ghost btn-sm" id="btn-view-calendar" onclick="switchRoadmapView('calendar')">
+          📅 Personalized Daily Study Calendar
+        </button>
+      </div>
+
+      <!-- ================= VIEW 1: SYLLABUS TREE VIEW ================= -->
+      <div id="roadmap-tree-view">
+        <!-- Overall progress banner -->
+        <div class="overall-banner" id="overall-banner">
+          <div>
+            <div class="overall-banner-title" id="overall-banner-title">Overall Semester Progress</div>
+            <div class="text-muted text-sm" id="overall-topics-text">Loading…</div>
+          </div>
+          <div>
+            <div class="overall-banner-value" id="overall-pct">—%</div>
+          </div>
+          <div style="flex:1; min-width:140px;">
+            <div class="progress-bar" style="height:8px;">
+              <div class="progress-fill" id="overall-bar" style="width:0%"></div>
+            </div>
+          </div>
         </div>
-        <div>
-          <div class="overall-banner-value" id="overall-pct">—%</div>
-        </div>
-        <div style="flex:1; min-width:140px;">
-          <div class="progress-bar" style="height:8px;">
-            <div class="progress-fill" id="overall-bar" style="width:0%"></div>
+
+        <!-- Subjects accordion — filled by JS -->
+        <div id="roadmap-container">
+          <div class="empty-state">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
+            <p>Loading your syllabus…</p>
           </div>
         </div>
       </div>
 
-      <!-- Subjects accordion — filled by JS -->
-      <div id="roadmap-container">
-        <div class="empty-state">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
-          <p>Loading your syllabus…</p>
+      <!-- ================= VIEW 2: PERSONALIZED DAILY STUDY CALENDAR ================= -->
+      <div id="roadmap-calendar-view" style="display:none;">
+        
+        <!-- Exam Planner Controls Card -->
+        <div class="card mb-4" style="border-left:4px solid var(--color-primary);">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:var(--sp-3);">
+            <div>
+              <h3 style="margin:0; font-size:16px; font-weight:700;">🎯 Student Exam Planner &amp; Schedule Parameters</h3>
+              <p class="text-muted text-xs" style="margin-top:2px;">
+                Enter your target examination date and daily study availability to dynamically generate your daily revision roadmap.
+              </p>
+            </div>
+            <span class="badge badge-blue" id="cal-academic-badge">Semester 3 (BCS-Series)</span>
+          </div>
+
+          <form onsubmit="handleSaveExamPlanner(event)" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; align-items:flex-end;">
+            <div class="form-group mb-0">
+              <label for="cal-exam-name" class="text-xs" style="font-weight:600;">Exam / Target Name</label>
+              <input type="text" id="cal-exam-name" class="form-input" placeholder="e.g. AKTU End-Sem Theory Exam" required />
+            </div>
+            <div class="form-group mb-0">
+              <label for="cal-exam-date" class="text-xs" style="font-weight:600;">Target Exam Date *</label>
+              <input type="date" id="cal-exam-date" class="form-input" required />
+            </div>
+            <div class="form-group mb-0">
+              <label for="cal-daily-hours" class="text-xs" style="font-weight:600;">Available Study Hours/Day</label>
+              <input type="number" id="cal-daily-hours" class="form-input" min="0.5" max="14" step="0.5" value="3" required />
+            </div>
+            <div>
+              <button type="submit" class="btn btn-primary w-full" id="btn-save-planner">
+                Generate / Recalculate Plan
+              </button>
+            </div>
+          </form>
+
+          <!-- Workload & Feasibility Warning -->
+          <div id="cal-pace-banner" style="margin-top:14px; padding:10px 14px; border-radius:6px; background:var(--color-bg); font-size:13px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div id="cal-pace-stats">Loading planner metrics…</div>
+            <div id="cal-pace-alert" style="display:none; color:var(--color-danger); font-weight:600;"></div>
+          </div>
         </div>
+
+        <!-- Date Navigation Bar -->
+        <div class="card mb-4" style="padding:12px 18px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button class="btn btn-ghost btn-sm" onclick="navCalendarDay(-1)" title="Previous Day">◀ Prev Day</button>
+              <button class="btn btn-ghost btn-sm" onclick="navCalendarDay(0)" title="Jump to Today">Today</button>
+              <button class="btn btn-ghost btn-sm" onclick="navCalendarDay(1)" title="Next Day">Next Day ▶</button>
+            </div>
+            <div style="text-align:center;">
+              <div id="cal-display-date" style="font-size:16px; font-weight:700; color:var(--color-text);">Today</div>
+              <div id="cal-display-sub" class="text-muted text-xs">Day view</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span id="cal-day-count-badge" class="badge badge-purple">0 Tasks Scheduled</span>
+              <button class="btn btn-ghost btn-sm" onclick="redistributeUnfinishedTasks()" title="Redistribute pending/overdue topics">
+                ⚡ Redistribute Unfinished
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Daily Tasks Container -->
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--sp-4);">
+            <div class="card-title" style="margin:0;" id="cal-tasks-title">Assigned Study Tasks</div>
+            <span class="text-xs text-muted">Checking off a task automatically updates your canonical syllabus progress.</span>
+          </div>
+
+          <div id="cal-tasks-list">
+            <div class="empty-state">
+              <p>No study tasks scheduled for this date.<br/>Set an exam date above to automatically generate your personalized daily syllabus plan.</p>
+            </div>
+          </div>
+        </div>
+
       </div>
-    </div>
   </div>
 </div>
 

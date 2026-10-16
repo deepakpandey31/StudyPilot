@@ -773,6 +773,485 @@ window.changeSemester = async function(newSemester) {
   await loadRoadmap();
 };
 
+// ─── PERSONALIZED DAILY STUDY CALENDAR ENGINE ─────────────────
+let activeRoadmapView = 'tree';
+let selectedCalDate   = getLocalTodayString();
+let dailyScheduleMap  = {};
+
+function getLocalTodayString() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function formatDisplayDate(dateStr) {
+  if (!dateStr) return 'No date';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  const todayStr = getLocalTodayString();
+  const isToday = dateStr === todayStr;
+  const options = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
+  const formatted = d.toLocaleDateString('en-IN', options);
+  return isToday ? `Today (${formatted})` : formatted;
+}
+
+window.switchRoadmapView = function(view) {
+  activeRoadmapView = view;
+  const btnTree = document.getElementById('btn-view-tree');
+  const btnCal  = document.getElementById('btn-view-calendar');
+  const treeView = document.getElementById('roadmap-tree-view');
+  const calView  = document.getElementById('roadmap-calendar-view');
+
+  if (view === 'tree') {
+    if (btnTree) btnTree.className = 'btn btn-primary btn-sm';
+    if (btnCal)  btnCal.className  = 'btn btn-ghost btn-sm';
+    if (treeView) treeView.style.display = 'block';
+    if (calView)  calView.style.display  = 'none';
+  } else {
+    if (btnTree) btnTree.className = 'btn btn-ghost btn-sm';
+    if (btnCal)  btnCal.className  = 'btn btn-primary btn-sm';
+    if (treeView) treeView.style.display = 'none';
+    if (calView)  calView.style.display  = 'block';
+    loadCalendarViewData();
+  }
+};
+
+function getPlannerStorageKey() {
+  return `studypilot_exam_planner_${currentDomainId}_sem_${currentSemester}`;
+}
+
+async function loadCalendarViewData() {
+  const badgeEl = document.getElementById('cal-academic-badge');
+  if (badgeEl) {
+    if (currentDomainId === 'aktu') {
+      const yr = currentSemester <= 2 ? 'First Year (2026–27 CSE)' : 'Second Year (BCS-Series)';
+      badgeEl.textContent = `Semester ${currentSemester} • ${yr}`;
+    } else {
+      badgeEl.textContent = `Domain: ${currentDomainId.toUpperCase()}`;
+    }
+  }
+
+  // Load saved planner settings from cache or Firestore
+  let planner = null;
+  try {
+    const raw = localStorage.getItem(getPlannerStorageKey());
+    if (raw) planner = JSON.parse(raw);
+  } catch (e) {}
+
+  if (!planner && currentUser && db) {
+    try {
+      const pRef = doc(db, 'users', currentUser.uid, 'examPlanner', getPlannerStorageKey());
+      const pSnap = await getDoc(pRef);
+      if (pSnap.exists()) {
+        planner = pSnap.data();
+        try { localStorage.setItem(getPlannerStorageKey(), JSON.stringify(planner)); } catch (e) {}
+      }
+    } catch (e) {}
+  }
+
+  const nameInput  = document.getElementById('cal-exam-name');
+  const dateInput  = document.getElementById('cal-exam-date');
+  const hoursInput = document.getElementById('cal-daily-hours');
+
+  if (planner) {
+    if (nameInput)  nameInput.value  = planner.examName || '';
+    if (dateInput)  dateInput.value  = planner.examDate || '';
+    if (hoursInput) hoursInput.value = planner.dailyHours || 3;
+    dailyScheduleMap = planner.dailySchedule || {};
+  } else {
+    if (nameInput)  nameInput.value  = currentDomainId === 'aktu' ? `AKTU Semester ${currentSemester} Examination` : 'Certification Exam';
+    if (hoursInput) hoursInput.value = 3;
+  }
+
+  renderCalendarViewUI();
+}
+
+window.handleSaveExamPlanner = async function(event) {
+  if (event) event.preventDefault();
+
+  const nameVal  = document.getElementById('cal-exam-name')?.value.trim() || 'Exam';
+  const dateVal  = document.getElementById('cal-exam-date')?.value;
+  const hoursVal = parseFloat(document.getElementById('cal-daily-hours')?.value || '3');
+
+  if (!dateVal) {
+    showToast('Please select a target examination date.', 'error');
+    return;
+  }
+
+  const todayStr = getLocalTodayString();
+  if (dateVal <= todayStr) {
+    showToast('Target examination date must be in the future.', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btn-save-planner');
+  if (btn) btn.disabled = true;
+
+  try {
+    // Generate schedule across days
+    const schedule = generateDailyStudySchedule(dateVal, hoursVal);
+    dailyScheduleMap = schedule;
+
+    const plannerData = {
+      examName: nameVal,
+      examDate: dateVal,
+      dailyHours: hoursVal,
+      dailySchedule: dailyScheduleMap,
+      updatedAt: new Date().toISOString()
+    };
+
+    try {
+      localStorage.setItem(getPlannerStorageKey(), JSON.stringify(plannerData));
+    } catch (e) {}
+
+    if (currentUser && db) {
+      const pRef = doc(db, 'users', currentUser.uid, 'examPlanner', getPlannerStorageKey());
+      await setDoc(pRef, plannerData, { merge: true });
+    }
+
+    showToast('Personalized daily study roadmap generated!', 'success');
+    renderCalendarViewUI();
+  } catch (err) {
+    console.error('Error saving exam planner:', err);
+    showToast('Could not save schedule. Please try again.', 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+};
+
+function generateDailyStudySchedule(targetDateStr, dailyHours) {
+  const allTopics = [];
+  (currentRoadmap || []).forEach(subject => {
+    (subject.units || []).forEach(unit => {
+      (unit.topics || []).forEach(topic => {
+        const key = `${subject.code}_${unit.id}_${topic.id}`;
+        allTopics.push({
+          key,
+          subjectName: subject.name,
+          subjectCode: subject.code,
+          subjectCredits: subject.credits || 3,
+          unitName: unit.name,
+          topicName: topic.name,
+          isDone: !!completedTopics[key]
+        });
+      });
+    });
+  });
+
+  // Filter incomplete topics (prioritize by subject credits descending)
+  const pendingTopics = allTopics.filter(t => !t.isDone);
+  pendingTopics.sort((a, b) => b.subjectCredits - a.subjectCredits);
+
+  // Calculate days array from today to target date
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(targetDateStr);
+  target.setHours(0, 0, 0, 0);
+
+  const diffMs = target.getTime() - today.getTime();
+  const diffDays = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+
+  const schedule = {};
+  const topicsPerDay = Math.max(1, Math.ceil(pendingTopics.length / diffDays));
+
+  let topicIndex = 0;
+  for (let i = 0; i < diffDays; i++) {
+    const curDate = new Date(today);
+    curDate.setDate(today.getDate() + i);
+    const y = curDate.getFullYear();
+    const m = String(curDate.getMonth() + 1).padStart(2, '0');
+    const d = String(curDate.getDate()).padStart(2, '0');
+    const dStr = `${y}-${m}-${d}`;
+
+    schedule[dStr] = [];
+
+    // Assign topics for this day
+    for (let j = 0; j < topicsPerDay && topicIndex < pendingTopics.length; j++) {
+      const top = pendingTopics[topicIndex++];
+      schedule[dStr].push({
+        id: `task_${dStr}_${top.key}`,
+        key: top.key,
+        subjectName: top.subjectName,
+        subjectCode: top.subjectCode,
+        unitName: top.unitName,
+        topicName: top.topicName,
+        durationMins: 45,
+        status: 'scheduled'
+      });
+    }
+  }
+
+  return schedule;
+}
+
+window.redistributeUnfinishedTasks = async function() {
+  const todayStr = getLocalTodayString();
+  const dateInput = document.getElementById('cal-exam-date');
+  const targetDateStr = dateInput?.value;
+
+  if (!targetDateStr) {
+    showToast('Please set an exam date first.', 'error');
+    return;
+  }
+
+  // Find all unfinished tasks on dates before today
+  const overdueTasks = [];
+  Object.keys(dailyScheduleMap).forEach(dStr => {
+    if (dStr < todayStr) {
+      const dayTasks = dailyScheduleMap[dStr] || [];
+      dayTasks.forEach(t => {
+        if (!completedTopics[t.key] && t.status !== 'completed') {
+          t.status = 'overdue';
+          overdueTasks.push(t);
+        }
+      });
+    }
+  });
+
+  if (overdueTasks.length === 0) {
+    showToast('No overdue tasks found! Great work staying on track.', 'success');
+    renderCalendarViewUI();
+    return;
+  }
+
+  // Append overdue tasks into today and future days without duplicate active topics
+  const scheduledKeys = new Set();
+  const futureDates = Object.keys(dailyScheduleMap).filter(d => d >= todayStr).sort();
+  if (futureDates.length === 0) futureDates.push(todayStr);
+
+  futureDates.forEach(d => {
+    (dailyScheduleMap[d] || []).forEach(t => scheduledKeys.add(t.key));
+  });
+
+  let assignIdx = 0;
+  overdueTasks.forEach(task => {
+    if (!scheduledKeys.has(task.key) && !completedTopics[task.key]) {
+      const targetDay = futureDates[assignIdx % futureDates.length];
+      if (!dailyScheduleMap[targetDay]) dailyScheduleMap[targetDay] = [];
+      dailyScheduleMap[targetDay].push({
+        ...task,
+        id: `task_${targetDay}_${task.key}_rescheduled`,
+        status: 'rescheduled'
+      });
+      scheduledKeys.add(task.key);
+      assignIdx++;
+    }
+  });
+
+  // Save updated schedule
+  const hoursVal = parseFloat(document.getElementById('cal-daily-hours')?.value || '3');
+  const nameVal  = document.getElementById('cal-exam-name')?.value || 'Exam';
+  const plannerData = {
+    examName: nameVal,
+    examDate: targetDateStr,
+    dailyHours: hoursVal,
+    dailySchedule: dailyScheduleMap,
+    updatedAt: new Date().toISOString()
+  };
+
+  try { localStorage.setItem(getPlannerStorageKey(), JSON.stringify(plannerData)); } catch (e) {}
+  if (currentUser && db) {
+    const pRef = doc(db, 'users', currentUser.uid, 'examPlanner', getPlannerStorageKey());
+    await setDoc(pRef, plannerData, { merge: true });
+  }
+
+  showToast(`${overdueTasks.length} unfinished tasks rescheduled across remaining days!`, 'success');
+  renderCalendarViewUI();
+};
+
+window.navCalendarDay = function(delta) {
+  if (delta === 0) {
+    selectedCalDate = getLocalTodayString();
+  } else {
+    const parts = selectedCalDate.split('-');
+    const cur = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    cur.setDate(cur.getDate() + delta);
+    const y = cur.getFullYear();
+    const m = String(cur.getMonth() + 1).padStart(2, '0');
+    const d = String(cur.getDate()).padStart(2, '0');
+    selectedCalDate = `${y}-${m}-${d}`;
+  }
+  renderCalendarViewUI();
+};
+
+window.toggleCalendarTask = async function(dateStr, key, isChecked) {
+  // 1. Update completedTopics canonical status
+  if (isChecked) {
+    completedTopics[key] = true;
+  } else {
+    delete completedTopics[key];
+  }
+
+  // 2. Update task in schedule
+  if (dailyScheduleMap[dateStr]) {
+    dailyScheduleMap[dateStr].forEach(t => {
+      if (t.key === key) {
+        t.status = isChecked ? 'completed' : 'scheduled';
+      }
+    });
+  }
+
+  // 3. Persist progress to local storage and Firestore
+  try {
+    localStorage.setItem(`studypilot_roadmap_progress_${getProgressDocKey()}`, JSON.stringify(completedTopics));
+  } catch (e) {}
+
+  if (currentUser && db) {
+    const progressRef = doc(db, 'users', currentUser.uid, 'roadmap', getProgressDocKey());
+    setDoc(progressRef, { completedTopics, updatedAt: new Date().toISOString() }, { merge: true }).catch(console.warn);
+  }
+
+  // 4. Update schedule in storage
+  const plannerRaw = localStorage.getItem(getPlannerStorageKey());
+  if (plannerRaw) {
+    try {
+      const p = JSON.parse(plannerRaw);
+      p.dailySchedule = dailyScheduleMap;
+      localStorage.setItem(getPlannerStorageKey(), JSON.stringify(p));
+      if (currentUser && db) {
+        const pRef = doc(db, 'users', currentUser.uid, 'examPlanner', getPlannerStorageKey());
+        setDoc(pRef, { dailySchedule: dailyScheduleMap }, { merge: true }).catch(console.warn);
+      }
+    } catch (e) {}
+  }
+
+  renderCalendarViewUI();
+  renderRoadmapUI(); // sync tree view immediately
+};
+
+function renderCalendarViewUI() {
+  const dateDisplayEl = document.getElementById('cal-display-date');
+  const dateSubEl     = document.getElementById('cal-display-sub');
+  const countBadgeEl  = document.getElementById('cal-day-count-badge');
+  const tasksListEl   = document.getElementById('cal-tasks-list');
+  const paceStatsEl   = document.getElementById('cal-pace-stats');
+  const paceAlertEl   = document.getElementById('cal-pace-alert');
+
+  if (dateDisplayEl) dateDisplayEl.textContent = formatDisplayDate(selectedCalDate);
+  if (dateSubEl) {
+    const todayStr = getLocalTodayString();
+    if (selectedCalDate === todayStr) dateSubEl.textContent = 'Showing today\'s active workload';
+    else if (selectedCalDate < todayStr) dateSubEl.textContent = 'Historical past study date';
+    else dateSubEl.textContent = 'Upcoming study session';
+  }
+
+  // Pace stats & Workload Advisory
+  const dateInput  = document.getElementById('cal-exam-date');
+  const hoursInput = document.getElementById('cal-daily-hours');
+  const targetDateStr = dateInput?.value;
+  const dailyHours    = parseFloat(hoursInput?.value || '3');
+
+  if (targetDateStr) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(targetDateStr);
+    target.setHours(0, 0, 0, 0);
+
+    const diffMs = target.getTime() - today.getTime();
+    const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    let totalPendingTopics = 0;
+    (currentRoadmap || []).forEach(s => {
+      (s.units || []).forEach(u => {
+        (u.topics || []).forEach(t => {
+          if (!completedTopics[`${s.code}_${u.id}_${t.id}`]) totalPendingTopics++;
+        });
+      });
+    });
+
+    const estHoursNeeded = Math.round((totalPendingTopics * 0.75) * 10) / 10;
+    const availableHours = Math.max(0, daysLeft * dailyHours);
+
+    if (paceStatsEl) {
+      paceStatsEl.innerHTML = `
+        <strong>${daysLeft > 0 ? daysLeft : 0} days remaining</strong> until exam.
+        Remaining: <strong>${totalPendingTopics} topics</strong> (~${estHoursNeeded} hrs needed).
+        Available study capacity: <strong>${availableHours} hrs</strong>.
+      `;
+    }
+
+    if (paceAlertEl) {
+      if (estHoursNeeded > availableHours && daysLeft > 0) {
+        paceAlertEl.style.display = 'block';
+        paceAlertEl.innerHTML = `⚠️ Workload Warning: ${estHoursNeeded} hrs needed exceeds capacity of ${availableHours} hrs. Increase daily hours or prioritize core theory topics!`;
+      } else {
+        paceAlertEl.style.display = 'none';
+      }
+    }
+  } else if (paceStatsEl) {
+    paceStatsEl.innerHTML = 'Enter target exam date and daily hours above to calculate pacing.';
+  }
+
+  // Render tasks for selected date
+  const dayTasks = dailyScheduleMap[selectedCalDate] || [];
+  if (countBadgeEl) countBadgeEl.textContent = `${dayTasks.length} Tasks Scheduled`;
+
+  if (!tasksListEl) return;
+
+  if (dayTasks.length === 0) {
+    tasksListEl.innerHTML = `
+      <div class="empty-state" style="padding:28px 16px;">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <p style="margin-top:8px;">No tasks assigned for ${formatDisplayDate(selectedCalDate)}.</p>
+        <p class="text-muted text-xs">Click "Generate / Recalculate Plan" above to distribute your syllabus across the calendar.</p>
+      </div>`;
+    return;
+  }
+
+  let html = '<div style="display:flex; flex-direction:column; gap:10px;">';
+  dayTasks.forEach(task => {
+    const isDone = !!completedTopics[task.key];
+    const isPast = selectedCalDate < getLocalTodayString();
+
+    let badgeClass = 'badge-blue';
+    let badgeText  = 'Scheduled';
+
+    if (isDone) {
+      badgeClass = 'badge-green';
+      badgeText  = 'Completed ✓';
+    } else if (task.status === 'rescheduled') {
+      badgeClass = 'badge-purple';
+      badgeText  = 'Rescheduled';
+    } else if (isPast || task.status === 'overdue') {
+      badgeClass = 'badge-red';
+      badgeText  = 'Overdue';
+    }
+
+    html += `
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:var(--color-bg); border:1px solid var(--color-border); border-radius:var(--radius-sm); gap:12px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:12px; flex:1; min-width:240px;">
+          <input
+            type="checkbox"
+            class="topic-checkbox"
+            style="width:18px; height:18px; cursor:pointer;"
+            ${isDone ? 'checked' : ''}
+            onchange="toggleCalendarTask('${selectedCalDate}', '${task.key}', this.checked)"
+          />
+          <div>
+            <div style="font-weight:600; font-size:14px; color:var(--color-text); ${isDone ? 'text-decoration:line-through; opacity:0.7;' : ''}">
+              ${escapeHtml(task.topicName)}
+            </div>
+            <div class="text-xs text-muted" style="margin-top:2px;">
+              <span style="font-weight:600; color:var(--color-primary);">${escapeHtml(task.subjectCode)}</span> • ${escapeHtml(task.subjectName)} &gt; ${escapeHtml(task.unitName)}
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="text-xs text-muted">⏱ ${task.durationMins || 45} mins</span>
+          <span class="badge ${badgeClass}" style="font-size:11px;">${badgeText}</span>
+        </div>
+      </div>
+    `;
+  });
+  html += '</div>';
+
+  tasksListEl.innerHTML = html;
+}
+
 // ─── USER INFO IN SIDEBAR ─────────────────────────────────────
 function renderUserInfo(user) {
   const name     = user.displayName || 'Student';
@@ -815,3 +1294,4 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 }
+

@@ -18,6 +18,22 @@ onAuthStateChanged(auth, async (user) => {
   loadExtensionIdStatus();
 });
 
+window.handleSettingsYearChange = function(yearVal) {
+  const semEl = document.getElementById('set-semester');
+  if (!semEl) return;
+  const isYear1 = String(yearVal) === '1';
+
+  document.querySelectorAll('.set-sem-yr1').forEach(el => el.style.display = isYear1 ? 'block' : 'none');
+  document.querySelectorAll('.set-sem-yr2').forEach(el => el.style.display = isYear1 ? 'none' : 'block');
+
+  const curSem = parseInt(semEl.value, 10);
+  if (isYear1 && (curSem === 3 || curSem === 4)) {
+    semEl.value = '1';
+  } else if (!isYear1 && (curSem === 1 || curSem === 2)) {
+    semEl.value = '3';
+  }
+};
+
 // ─── LOAD PROFILE ─────────────────────────────────────────────
 async function loadProfile(user) {
   const profileRef = doc(db, 'users', user.uid);
@@ -27,17 +43,24 @@ async function loadProfile(user) {
     const data = snap.data();
     const nameEl     = document.getElementById('set-name');
     const branchEl   = document.getElementById('set-branch');
+    const yearEl     = document.getElementById('set-year');
     const semEl      = document.getElementById('set-semester');
     const goalEl     = document.getElementById('set-goal');
 
+    const sem = parseInt(data.semester || 3, 10);
+    const isYear1 = (sem === 1 || sem === 2) || (data.academicYear === 'First Year');
+
     if (nameEl)   nameEl.value   = data.name     || user.displayName || '';
-    if (branchEl) branchEl.value = data.branch   || 'CSE';
-    if (semEl)    semEl.value    = String(data.semester   || 3);
+    if (branchEl) branchEl.value = 'CSE';
+    if (yearEl)   yearEl.value   = isYear1 ? '1' : '2';
+    window.handleSettingsYearChange(isYear1 ? '1' : '2');
+    if (semEl)    semEl.value    = String(sem);
     if (goalEl)   goalEl.value   = data.dailyGoalMin || 60;
   } else {
     // Profile doesn't exist yet, prefill from auth
     const nameEl = document.getElementById('set-name');
     if (nameEl) nameEl.value = user.displayName || '';
+    window.handleSettingsYearChange('2');
   }
 }
 
@@ -46,7 +69,8 @@ window.saveProfile = async function(event) {
   event.preventDefault();
 
   const name     = document.getElementById('set-name')?.value.trim();
-  const branch   = document.getElementById('set-branch')?.value;
+  const branch   = 'CSE';
+  const yearVal  = document.getElementById('set-year')?.value || '2';
   const semester = parseInt(document.getElementById('set-semester')?.value || '3', 10);
   const goal     = parseInt(document.getElementById('set-goal')?.value || '60', 10);
   const btn      = document.getElementById('profile-save-btn');
@@ -59,15 +83,23 @@ window.saveProfile = async function(event) {
     // Update Firebase Auth display name
     await updateProfile(currentUser, { displayName: name });
 
+    const academicYear = yearVal === '1' ? 'First Year' : 'Second Year';
     // Update Firestore profile
     const profileRef = doc(db, 'users', currentUser.uid);
     await setDoc(profileRef, {
       name,
-      branch,
+      branch: 'CSE',
+      academicYear,
       semester,
       dailyGoalMin: goal,
       email: currentUser.email
     }, { merge: true });
+
+    try {
+      localStorage.setItem('studypilot_current_semester', String(semester));
+      localStorage.setItem('studypilot_academic_year', academicYear);
+      localStorage.setItem('studypilot_user_name', name);
+    } catch (e) {}
 
     showToast('Profile saved!', 'success');
 

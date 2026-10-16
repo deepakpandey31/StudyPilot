@@ -62,15 +62,34 @@ onAuthStateChanged(auth, (user) => {
 
 // ─── SIGNUP HANDLER ───────────────────────────────────────────
 // Called when the signup form is submitted (onsubmit="handleSignup(event)")
+// Dynamic Year -> Semester toggle in signup modal
+window.handleSignupYearChange = function(yearVal) {
+  const semSelect = document.getElementById('signup-semester');
+  if (!semSelect) return;
+  const isYear1 = String(yearVal) === '1';
+
+  document.querySelectorAll('.sem-yr1').forEach(el => el.style.display = isYear1 ? 'block' : 'none');
+  document.querySelectorAll('.sem-yr2').forEach(el => el.style.display = isYear1 ? 'none' : 'block');
+
+  if (isYear1) {
+    semSelect.value = '1';
+  } else {
+    semSelect.value = '3';
+  }
+};
+
 window.handleSignup = async function(event) {
   event.preventDefault();  // stop the browser from reloading the page
 
   // Read values from the form inputs
-  const name     = document.getElementById('signup-name').value.trim();
-  const email    = document.getElementById('signup-email').value.trim();
-  const password = document.getElementById('signup-password').value;
-  const errorEl  = document.getElementById('signup-error');
-  const btn      = document.getElementById('signup-btn');
+  const name        = document.getElementById('signup-name').value.trim();
+  const email       = document.getElementById('signup-email').value.trim();
+  const password    = document.getElementById('signup-password').value;
+  const yearVal     = document.getElementById('signup-year')?.value || '2';
+  const semesterVal = parseInt(document.getElementById('signup-semester')?.value || '3', 10);
+  const branchVal   = document.getElementById('signup-branch')?.value || 'CSE';
+  const errorEl     = document.getElementById('signup-error');
+  const btn         = document.getElementById('signup-btn');
 
   // Clear previous errors
   errorEl.textContent = '';
@@ -93,23 +112,28 @@ window.handleSignup = async function(event) {
     await updateProfile(user, { displayName: name });
 
     // Step 3: Create a user profile document in Firestore
-    // This stores extra info that Firebase Auth doesn't handle (semester, branch, etc.)
+    // This stores academic information matching authoritative AKTU CSE curriculum
+    const academicYear = yearVal === '1' ? 'First Year' : 'Second Year';
     await setDoc(doc(db, 'users', user.uid), {
       name:         name,
       email:        email,
-      branch:       'CSE',          // default — user can change in settings
-      semester:     3,              // default semester
-      dailyGoalMin: 60,             // default daily study goal: 60 minutes
+      branch:       branchVal,
+      academicYear: academicYear,
+      semester:     semesterVal,
+      dailyGoalMin: 60,
       createdAt:    serverTimestamp()
     });
 
+    try {
+      localStorage.setItem('studypilot_current_semester', String(semesterVal));
+      localStorage.setItem('studypilot_academic_year', academicYear);
+      localStorage.setItem('studypilot_user_name', name);
+    } catch (e) {}
+
     // Step 4: Redirect to dashboard
-    // onAuthStateChanged above will also fire, but explicit redirect is clearer
     window.location.href = 'pages/dashboard.html';
 
   } catch (err) {
-    // Firebase returns error codes like "auth/email-already-in-use"
-    // We convert them to friendly messages for the student
     errorEl.textContent = getAuthErrorMessage(err.code);
     setButtonLoading(btn, false);
   }

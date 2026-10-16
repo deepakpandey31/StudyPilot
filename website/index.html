@@ -82,7 +82,7 @@
               <div class="preview-mini-bar"><div style="width:45%"></div></div>
             </div>
             <div class="preview-subject-row">
-              <span>DBMS</span>
+              <span>Discrete Structures &amp; Logic</span>
               <div class="preview-mini-bar"><div style="width:28%"></div></div>
             </div>
           </div>
@@ -217,6 +217,32 @@
         <div class="form-group">
           <label for="signup-password">Password</label>
           <input type="password" id="signup-password" placeholder="At least 6 characters" required minlength="6" autocomplete="new-password" />
+        </div>
+
+        <!-- Academic Setup (AKTU B.Tech CSE Years 1 & 2) -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div class="form-group">
+            <label for="signup-year">Academic Year</label>
+            <select id="signup-year" onchange="window.handleSignupYearChange(this.value)">
+              <option value="1">First Year (2026–27)</option>
+              <option value="2" selected>Second Year (BCS)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="signup-semester">Semester</label>
+            <select id="signup-semester">
+              <option value="1" class="sem-yr1" style="display:none;">Semester 1</option>
+              <option value="2" class="sem-yr1" style="display:none;">Semester 2</option>
+              <option value="3" class="sem-yr2" selected>Semester 3</option>
+              <option value="4" class="sem-yr2">Semester 4</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="signup-branch">Branch</label>
+          <select id="signup-branch">
+            <option value="CSE" selected>Computer Science &amp; Engineering (CSE)</option>
+          </select>
         </div>
 
         <div id="signup-error" class="form-error" role="alert" aria-live="polite"></div>

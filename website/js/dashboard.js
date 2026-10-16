@@ -442,8 +442,11 @@ async function loadSubjectProgress(uid) {
   const domainId = currentDomain.id;
 
   const profileRef = doc(db, 'users', uid);
-  const snap       = await getDoc(profileRef);
-  const semester   = snap.exists() ? (snap.data().semester || 3) : 3;
+  let semester = snap.exists() ? (parseInt(snap.data().semester, 10) || 3) : 3;
+  if (!semester || semester < 1 || semester > 4) {
+    const cached = parseInt(localStorage.getItem('studypilot_current_semester'), 10);
+    semester = (cached >= 1 && cached <= 4) ? cached : 3;
+  }
 
   // Check if user has a customized roadmap for this domain
   let subjects = [];

@@ -280,32 +280,35 @@
       </div>
 
       <!-- Mode Selector Tabs -->
-      <div style="display:flex; gap:8px; margin-bottom:var(--sp-4);">
+      <div style="display:flex; gap:8px; margin-bottom:var(--sp-4); flex-wrap:wrap;">
         <button class="btn btn-primary btn-sm" id="btn-mode-a" onclick="switchTestMode('A')">
-          Mode A: Custom Test
+          Mode A: Subject &amp; Unit Selection
         </button>
         <button class="btn btn-ghost btn-sm" id="btn-mode-b" onclick="switchTestMode('B')">
-          Mode B: Test Based on My Progress
+          Mode B: Test Based on Overall Progress
+        </button>
+        <button class="btn btn-ghost btn-sm" id="btn-mode-c" onclick="switchTestMode('C')">
+          Mode C: Recent Video-Based Test
         </button>
       </div>
 
       <!-- MODE A: Custom Test Form -->
       <div class="test-gen-form" id="mode-a-card">
-        <div class="card-title" style="margin-bottom:var(--sp-2);">Mode A: Custom Practice Test</div>
-        <p class="text-muted text-xs mb-4">Choose any subject, unit, or specific topics from the active domain to test your comprehension.</p>
+        <div class="card-title" style="margin-bottom:var(--sp-2);">Mode A: Subject &amp; Unit Selection</div>
+        <p class="text-muted text-xs mb-4">Choose any subject, unit, or specific topics from the canonical curriculum to test your comprehension.</p>
         
         <!-- Semester Selector for AKTU Domain -->
         <div class="form-group mb-3" id="test-semester-container" style="display:none;">
           <label for="test-semester">AKTU Semester</label>
           <select id="test-semester" onchange="changeTestSemester(this.value)">
-            <option value="1">Semester 1</option>
-            <option value="2">Semester 2</option>
-            <option value="3" selected>Semester 3</option>
-            <option value="4">Semester 4</option>
-            <option value="5">Semester 5</option>
-            <option value="6">Semester 6</option>
-            <option value="7">Semester 7</option>
-            <option value="8">Semester 8</option>
+            <optgroup label="First Year (2026–27 CSE Stream)">
+              <option value="1">Semester 1</option>
+              <option value="2">Semester 2</option>
+            </optgroup>
+            <optgroup label="Second Year (BCS-Series CSE)">
+              <option value="3" selected>Semester 3</option>
+              <option value="4">Semester 4</option>
+            </optgroup>
           </select>
         </div>
 
@@ -348,15 +351,15 @@
           </select>
         </div>
         <button class="btn btn-primary" onclick="generateTest()" id="gen-test-btn">
-          <span class="btn-text">Generate Custom Test</span>
+          <span class="btn-text">Generate Practice Test</span>
           <span class="btn-spinner hidden"></span>
         </button>
       </div>
 
       <!-- MODE B: Progress-Based Test Card -->
       <div class="test-gen-form" id="mode-b-card" style="display:none;">
-        <div class="card-title" style="margin-bottom:var(--sp-2);">Mode B: Test Based on My Actual Progress</div>
-        <p class="text-muted text-xs mb-4">Automatically generates questions strictly covering the topics you have completed or watched in this domain.</p>
+        <div class="card-title" style="margin-bottom:var(--sp-2);">Mode B: Test Based on Overall Progress</div>
+        <p class="text-muted text-xs mb-4">Automatically generates questions strictly covering the topics you have completed or studied in this semester.</p>
 
         <div id="mode-b-topics-box" style="background:var(--color-bg); border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:14px; margin-bottom:var(--sp-4);">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
@@ -386,6 +389,39 @@
         </div>
         <button class="btn btn-primary" onclick="generateProgressTest()" id="gen-progress-test-btn">
           <span class="btn-text">Generate Progress-Based Test</span>
+          <span class="btn-spinner hidden"></span>
+        </button>
+      </div>
+
+      <!-- MODE C: Recent Video-Based Test Card -->
+      <div class="test-gen-form" id="mode-c-card" style="display:none;">
+        <div class="card-title" style="margin-bottom:var(--sp-2);">Mode C: Recent Video-Based Test</div>
+        <p class="text-muted text-xs mb-4">Generate questions directly from your recently watched YouTube study lectures or corresponding syllabus topics.</p>
+
+        <div class="form-group mb-4">
+          <label for="mode-c-video-select">Choose Recent Study Video</label>
+          <select id="mode-c-video-select" onchange="handleModeCVideoChange(this.value)">
+            <option value="">Loading recent study videos…</option>
+          </select>
+        </div>
+
+        <div id="mode-c-video-info" style="background:var(--color-bg); border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:14px; margin-bottom:var(--sp-4);">
+          <div style="font-weight:600; font-size:14px; color:var(--color-text);" id="mode-c-title">No video selected</div>
+          <div class="text-xs text-muted" style="margin-top:4px;" id="mode-c-meta">Select a recently tracked YouTube lecture above.</div>
+          <div id="mode-c-transcript-notice" class="text-xs" style="margin-top:8px; padding:6px 10px; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:4px; color:#1E40AF;">
+            ℹ️ <strong>Curriculum Mapping:</strong> Questions are formulated from verified syllabus concepts and mapped topics corresponding to this video.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="test-num-q-c">Number of questions</label>
+          <select id="test-num-q-c">
+            <option value="5" selected>5 questions</option>
+            <option value="10">10 questions</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="generateVideoTest()" id="gen-video-test-btn">
+          <span class="btn-text">Generate Video-Based Test</span>
           <span class="btn-spinner hidden"></span>
         </button>
       </div>
