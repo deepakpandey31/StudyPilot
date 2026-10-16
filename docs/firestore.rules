@@ -61,6 +61,11 @@ service cloud.firestore {
       match /customRoadmaps/{roadmapId} {
         allow read, write: if isAuthenticated() && isOwner(userId);
       }
+
+      // Exam planner and calendar roadmaps
+      match /examPlanner/{document=**} {
+        allow read, write: if isAuthenticated() && isOwner(userId);
+      }
     }
 
     // ── VIDEOS COLLECTION ──────────────────────────────────

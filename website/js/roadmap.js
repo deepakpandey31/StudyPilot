@@ -823,6 +823,10 @@ function getPlannerStorageKey() {
   return `studypilot_exam_planner_${currentDomainId}_sem_${currentSemester}`;
 }
 
+function getPlannerDocKey() {
+  return `planner_${currentDomainId}_sem_${currentSemester}`;
+}
+
 async function loadCalendarViewData() {
   const badgeEl = document.getElementById('cal-academic-badge');
   if (badgeEl) {
@@ -843,13 +847,24 @@ async function loadCalendarViewData() {
 
   if (!planner && currentUser && db) {
     try {
-      const pRef = doc(db, 'users', currentUser.uid, 'examPlanner', getPlannerStorageKey());
+      // 1. Try roadmap subcollection (conforms to Firestore security rules)
+      const pRef = doc(db, 'users', currentUser.uid, 'roadmap', getPlannerDocKey());
       const pSnap = await getDoc(pRef);
       if (pSnap.exists()) {
         planner = pSnap.data();
         try { localStorage.setItem(getPlannerStorageKey(), JSON.stringify(planner)); } catch (e) {}
+      } else {
+        // 2. Legacy fallback
+        const legacyRef = doc(db, 'users', currentUser.uid, 'examPlanner', getPlannerStorageKey());
+        const legSnap = await getDoc(legacyRef);
+        if (legSnap.exists()) {
+          planner = legSnap.data();
+          try { localStorage.setItem(getPlannerStorageKey(), JSON.stringify(planner)); } catch (e) {}
+        }
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn('Notice loading cloud planner:', e);
+    }
   }
 
   const nameInput  = document.getElementById('cal-exam-name');
@@ -891,6 +906,10 @@ window.handleSaveExamPlanner = async function(event) {
   if (btn) btn.disabled = true;
 
   try {
+    if (!currentRoadmap || currentRoadmap.length === 0) {
+      currentRoadmap = getDomainRoadmap(currentDomainId, currentSemester) || [];
+    }
+
     // Generate schedule across days
     const schedule = generateDailyStudySchedule(dateVal, hoursVal);
     dailyScheduleMap = schedule;
@@ -903,20 +922,30 @@ window.handleSaveExamPlanner = async function(event) {
       updatedAt: new Date().toISOString()
     };
 
+    // 1. Immediately save to localStorage
     try {
       localStorage.setItem(getPlannerStorageKey(), JSON.stringify(plannerData));
-    } catch (e) {}
-
-    if (currentUser && db) {
-      const pRef = doc(db, 'users', currentUser.uid, 'examPlanner', getPlannerStorageKey());
-      await setDoc(pRef, plannerData, { merge: true });
+    } catch (e) {
+      console.warn('LocalStorage save error:', e);
     }
 
-    showToast('Personalized daily study roadmap generated!', 'success');
+    // 2. Render UI and notify student immediately
+    selectedCalDate = todayStr;
     renderCalendarViewUI();
+    showToast('Personalized daily study roadmap generated!', 'success');
+
+    // 3. Sync to Firestore in background under permitted 'roadmap' subcollection
+    if (currentUser && db) {
+      try {
+        const pRef = doc(db, 'users', currentUser.uid, 'roadmap', getPlannerDocKey());
+        await setDoc(pRef, plannerData, { merge: true });
+      } catch (cloudErr) {
+        console.warn('Notice: Firestore cloud sync skipped, local schedule active:', cloudErr);
+      }
+    }
   } catch (err) {
-    console.error('Error saving exam planner:', err);
-    showToast('Could not save schedule. Please try again.', 'error');
+    console.error('Error generating exam planner:', err);
+    showToast('Could not generate schedule. Please try again.', 'error');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -948,8 +977,8 @@ function generateDailyStudySchedule(targetDateStr, dailyHours) {
   // Calculate days array from today to target date
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const target = new Date(targetDateStr);
-  target.setHours(0, 0, 0, 0);
+  const parts = targetDateStr.split('-').map(Number);
+  const target = new Date(parts[0], parts[1] - 1, parts[2], 0, 0, 0, 0);
 
   const diffMs = target.getTime() - today.getTime();
   const diffDays = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
@@ -1053,13 +1082,17 @@ window.redistributeUnfinishedTasks = async function() {
   };
 
   try { localStorage.setItem(getPlannerStorageKey(), JSON.stringify(plannerData)); } catch (e) {}
-  if (currentUser && db) {
-    const pRef = doc(db, 'users', currentUser.uid, 'examPlanner', getPlannerStorageKey());
-    await setDoc(pRef, plannerData, { merge: true });
-  }
-
   showToast(`${overdueTasks.length} unfinished tasks rescheduled across remaining days!`, 'success');
   renderCalendarViewUI();
+
+  if (currentUser && db) {
+    try {
+      const pRef = doc(db, 'users', currentUser.uid, 'roadmap', getPlannerDocKey());
+      await setDoc(pRef, plannerData, { merge: true });
+    } catch (cloudErr) {
+      console.warn('Notice: cloud sync skipped for reschedule:', cloudErr);
+    }
+  }
 };
 
 window.navCalendarDay = function(delta) {
@@ -1112,7 +1145,7 @@ window.toggleCalendarTask = async function(dateStr, key, isChecked) {
       p.dailySchedule = dailyScheduleMap;
       localStorage.setItem(getPlannerStorageKey(), JSON.stringify(p));
       if (currentUser && db) {
-        const pRef = doc(db, 'users', currentUser.uid, 'examPlanner', getPlannerStorageKey());
+        const pRef = doc(db, 'users', currentUser.uid, 'roadmap', getPlannerDocKey());
         setDoc(pRef, { dailySchedule: dailyScheduleMap }, { merge: true }).catch(console.warn);
       }
     } catch (e) {}
