@@ -275,20 +275,13 @@
         </div>
       </div>
 
-      <!-- Domain selector -->
-      <div class="subject-row">
-        <label for="popup-domain-select">Domain:</label>
-        <select id="popup-domain-select" class="subject-select">
-          <option value="aktu">AKTU Academic</option>
-          <option value="dsa">DSA</option>
-          <option value="webdev">Web Development</option>
-        </select>
-      </div>
-
-      <!-- Auto-detected subject display -->
-      <div id="popup-detected-row" class="subject-row" style="background:var(--color-surface); border:1px solid var(--color-border); border-radius:6px; padding:6px 10px; margin-bottom:12px;">
-        <span style="font-size:11px; color:var(--color-muted); white-space:nowrap;">Folder:</span>
-        <span id="popup-subject-name" style="font-size:11px; font-weight:600; color:var(--color-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Auto-detecting from title…</span>
+      <!-- 100% Auto-Detected Subject Folder (Zero manual dropdowns) -->
+      <div id="popup-detected-row" style="background:#EEF2FF; border:1px solid #C7D2FE; border-radius:6px; padding:8px 10px; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+        <span style="font-size:14px;">📁</span>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:9.5px; font-weight:700; color:#4F46E5; text-transform:uppercase; letter-spacing:0.5px;">Auto-Detected Folder</div>
+          <div id="popup-subject-name" style="font-size:11.5px; font-weight:600; color:#1E1B4B; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Detecting from video title…</div>
+        </div>
       </div>
 
       <!-- Action buttons -->
