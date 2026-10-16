@@ -15,7 +15,7 @@ let currentDomainId   = 'aktu';
 
 function isContextValid() {
   try {
-    return Boolean(typeof chrome !== 'undefined' && chrome?.runtime && chrome.runtime.id);
+    return Boolean(typeof chrome !== 'undefined' && chrome?.runtime && Boolean(chrome.runtime.id));
   } catch (e) {
     return false;
   }
@@ -23,27 +23,48 @@ function isContextValid() {
 
 // Load initial activeDomain from extension storage
 try {
-  if (isContextValid() && chrome.storage?.local) {
+  if (isContextValid() && chrome?.storage?.local) {
     chrome.storage.local.get('activeDomain', (res) => {
+      if (!isContextValid()) return;
       if (res?.activeDomain) currentDomainId = res.activeDomain;
     });
-    chrome.storage.onChanged.addListener((changes) => {
-      if (changes.activeDomain?.newValue) {
-        currentDomainId = changes.activeDomain.newValue;
-      }
-    });
+    if (chrome.storage?.onChanged) {
+      chrome.storage.onChanged.addListener((changes) => {
+        if (!isContextValid()) return;
+        if (changes.activeDomain?.newValue) {
+          currentDomainId = changes.activeDomain.newValue;
+        }
+      });
+    }
   }
 } catch (e) {}
 
 // ─── INITIALIZATION ───────────────────────────────────────────
-initTracking();
+if (isContextValid()) {
+  initTracking();
+}
 
 // YouTube Single Page Navigation events
-document.addEventListener('yt-navigate-finish', () => setTimeout(initTracking, 800));
-document.addEventListener('yt-page-data-updated', () => setTimeout(initTracking, 800));
-window.addEventListener('popstate', () => setTimeout(initTracking, 800));
+const handleNav = () => {
+  if (!isContextValid()) {
+    if (trackingInterval) clearInterval(trackingInterval);
+    return;
+  }
+  setTimeout(() => {
+    if (isContextValid()) initTracking();
+  }, 800);
+};
+
+document.addEventListener('yt-navigate-finish', handleNav);
+document.addEventListener('yt-page-data-updated', handleNav);
+window.addEventListener('popstate', handleNav);
 
 function initTracking() {
+  if (!isContextValid()) {
+    if (trackingInterval) clearInterval(trackingInterval);
+    return;
+  }
+
   const newVideoId = extractVideoId();
 
   if (!newVideoId) {
@@ -56,22 +77,28 @@ function initTracking() {
   if (newVideoId !== videoId) {
     if (videoId) sendProgress();
 
-    videoId          = newVideoId;
-    watchedSeconds   = 0;
-    lastTrackedTime  = null;
+    videoId           = newVideoId;
+    watchedSeconds    = 0;
+    lastTrackedTime   = null;
     isClassifiedStudy = true;
 
     // Restore existing progress from storage if video was watched previously
-    if (chrome?.storage?.local) {
-      chrome.storage.local.get(['videos', 'activeDomain'], (res) => {
-        if (res?.videos && res.videos[newVideoId]) {
-          const prev = res.videos[newVideoId];
-          watchedSeconds = prev.watchedSeconds || 0;
-          if (prev.subject) currentSubject = prev.subject;
-          if (prev.isStudy !== undefined) isClassifiedStudy = prev.isStudy;
-        }
-        if (res?.activeDomain) currentDomainId = res.activeDomain;
-      });
+    try {
+      if (isContextValid() && chrome?.storage?.local) {
+        chrome.storage.local.get(['videos', 'activeDomain'], (res) => {
+          if (!isContextValid()) return;
+          if (res?.videos && res.videos[newVideoId]) {
+            const prev = res.videos[newVideoId];
+            watchedSeconds = prev.watchedSeconds || 0;
+            if (prev.subject) currentSubject = prev.subject;
+            if (prev.isStudy !== undefined) isClassifiedStudy = prev.isStudy;
+          }
+          if (res?.activeDomain) currentDomainId = res.activeDomain;
+        });
+      }
+    } catch (e) {
+      if (trackingInterval) clearInterval(trackingInterval);
+      return;
     }
 
     console.log('[StudyPilot AI] Video tracking active for:', videoId);
@@ -80,7 +107,9 @@ function initTracking() {
     trackingInterval = setInterval(trackPlayback, TRACK_INTERVAL_MS);
 
     // Initial announce
-    setTimeout(() => sendProgress(0), 1200);
+    setTimeout(() => {
+      if (isContextValid()) sendProgress(0);
+    }, 1200);
 
     // Attach event listeners to player
     attachPlayerListeners();
@@ -120,6 +149,11 @@ function attachPlayerListeners() {
 }
 
 function trackPlayback() {
+  if (!isContextValid()) {
+    if (trackingInterval) clearInterval(trackingInterval);
+    return;
+  }
+
   const player = getVideoElement();
   if (!player || player.paused || player.ended) return;
 
@@ -192,7 +226,7 @@ function sendProgress(delta = 0) {
 
   // 1. Direct write to chrome.storage.local for instantaneous persistence
   try {
-    if (chrome?.storage?.local && isContextValid()) {
+    if (isContextValid() && chrome?.storage?.local) {
       chrome.storage.local.get(['videos', 'activeDomain', 'todayMinutes'], (res) => {
         if (!isContextValid()) return;
         const videos = res.videos || {};
@@ -209,47 +243,57 @@ function sendProgress(delta = 0) {
         chrome.storage.local.set({ videos });
       });
     }
-  } catch (e) {}
+  } catch (e) {
+    if (trackingInterval) clearInterval(trackingInterval);
+  }
 
   // 2. Also dispatch message to background worker
   try {
-    if (isContextValid()) {
+    if (isContextValid() && chrome?.runtime?.sendMessage) {
       chrome.runtime.sendMessage({
         type:    'VIDEO_PROGRESS',
         payload: data
       }, () => {
-        if (chrome.runtime.lastError) {
-          // Expected when popup or background is idle
+        if (!isContextValid() || chrome.runtime.lastError) {
+          // Expected when popup or background is idle or context invalidated
         }
       });
     }
   } catch (e) {
     // Context may be invalidated if extension was reloaded
+    if (trackingInterval) clearInterval(trackingInterval);
   }
 }
 
 // ─── POPUP COMMUNICATION ──────────────────────────────────────
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === 'GET_CURRENT_VIDEO') {
-    sendResponse({ payload: collectMetadata(0) });
-  }
+try {
+  if (isContextValid() && chrome?.runtime?.onMessage) {
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      if (!isContextValid()) return;
+      if (message.type === 'GET_CURRENT_VIDEO') {
+        sendResponse({ payload: collectMetadata(0) });
+      }
 
-  if (message.type === 'SET_STUDY_CLASSIFICATION') {
-    isClassifiedStudy = message.isStudy;
-    sendProgress(0);
-    sendResponse({ ok: true });
-  }
+      if (message.type === 'SET_STUDY_CLASSIFICATION') {
+        isClassifiedStudy = message.isStudy;
+        sendProgress(0);
+        sendResponse({ ok: true });
+      }
 
-  if (message.type === 'SET_SUBJECT') {
-    currentSubject = message.subjectCode || '';
-    sendProgress(0);
-    sendResponse({ ok: true });
-  }
+      if (message.type === 'SET_SUBJECT') {
+        currentSubject = message.subjectCode || '';
+        sendProgress(0);
+        sendResponse({ ok: true });
+      }
 
-  return true;
-});
+      return true;
+    });
+  }
+} catch (e) {}
 
 window.addEventListener('beforeunload', () => {
-  sendProgress(0);
+  try {
+    if (isContextValid()) sendProgress(0);
+  } catch (e) {}
   if (trackingInterval) clearInterval(trackingInterval);
 });
